@@ -1,6 +1,5 @@
-// VARIABLE[ROWS][COLUMNS]
-// N ROWS
-// M COLUMNS
+#ifndef UTILS_H
+#define UTILS_H
 
 /* ADMM Algorithm
     // X Minimization
@@ -12,17 +11,13 @@
 
     // Update the scaled dual variable
     u = u + (A*x + z - c);
-*/
 
-/*
 Variables:
     z
     u
     x
     -u
-*/
 
-/*
 Parameters to save (fixed over iterations):
     -c
     R_inv
@@ -34,30 +29,113 @@ Parameters to save (fixed over iterations):
 */
 
 template<int N, int M, int P, typename T>
-void mult(T (&A)[N][M], T (&B)[M][P], T (&res)[N][P])
-{
-	for(int i = 0; i < N; ++i)
-	{
-		for(int j = 0; j < P; ++j)
-		{
-			res[i][j] = A[i][0] * B[0][j];
-
-			for(int k = 1; k < M; ++k)
-			{
-				res[i][j] += A[i][k] * B[k][j];
+void mmult(T (&A)[N][M], T (&B)[M][P], T (&R)[N][P]){
+	mmult_row: for(int i = 0; i < N; ++i){
+		mmult_column: for(int j = 0; j < P; ++j){
+			R[i][j] = A[i][0] * B[0][j];
+			mmult_dotp: for(int k = 1; k < M; ++k){
+				R[i][j] += A[i][k] * B[k][j];
 			}
 		}
 	}
+	return;
 }
 
 template<int N, int M, typename T>
-void add2(T (&A)[N][M], T (&B)[N][M], T (&res)[N][M])
+void mvmult(T (&A)[N][M], T (&B)[M], T (&R)[N]){
+	T temp[N];
+	mvmult_row: for(int i = 0; i < N; ++i){
+//#pragma HLS PIPELINE
+		R[i] = 0;
+		mvmult_column: for(int j = 0; j < M; ++j){
+//#pragma HLS PIPELINE
+//#pragma HLS UNROLL factor=2
+			R[i] += A[i][j] * B[j];
+		}
+	}
+	return;
+}
+
+template<int N, int M, typename T>
+void madd(T (&A)[N][M], T (&B)[N][M], T (&R)[N][M]){
+	madd_row: for(int i = 0; i < N; ++i){
+		madd_column: for(int j = 0; j < M; ++j){
+			R[i][j] = A[i][j] + B[i][j];
+		}
+	}
+	return;
+}
+
+template<int N, int M, typename T>
+void msub(T (&A)[N][M], T (&B)[N][M], T (&R)[N][M]){
+	msub_row: for(int i = 0; i < N; ++i){
+		msub_column: for(int j = 0; j < M; ++j){
+			R[i][j] = A[i][j] - B[i][j];
+		}
+	}
+	return;
+}
+
+template<int N, typename T>
+void vadd(T (&A)[N], T (&B)[N], T (&R)[N]){
+	vadd_row: for(int i = 0; i < N; ++i){
+#pragma HLS PIPELINE
+		R[i] = A[i] + B[i];
+	}
+	return;
+}
+
+template<int N, typename T>
+void vsub(T (&A)[N], T (&B)[N], T (&R)[N]){
+	vsub_row: for(int i = 0; i < N; ++i){
+#pragma HLS PIPELINE
+		R[i] = A[i] - B[i];
+	}
+	return;
+}
+
+template<int N, typename T>
+void max0(T (&A)[N], T (&R)[N]){
+    max0_row: for (int i = 0; i < N; i++){
+#pragma HLS PIPELINE
+        if (A[i] > 0){
+            R[i] = A[i];
+        }
+        else {
+        	R[i] = 0;
+        }
+    }
+    return;
+}
+
+/*
+template<int N, int M, int P, typename T>
+void mmult(T (&A)[N][M], T (&B)[M][P], T (&R)[N][P]);
+
+template<int N, int M, typename T>
+void mvmult(T (&A)[N][M], T (&B)[M], T (&R)[N]);
+
+template<int N, int M, typename T>
+void madd(T (&A)[N][M], T (&B)[N][M], T (&R)[N][M]);
+
+template<int N, int M, typename T>
+void msub(T (&A)[N][M], T (&B)[N][M], T (&R)[N][M]);
+
+template<int N, typename T>
+void vadd(T (&A)[N], T (&B)[N], T (&R)[N]);
+
+template<int N, typename T>
+void vsub(T (&A)[N], T (&B)[N], T (&R)[N]);
+*/
+/*
+template<int N, int M, typename T>
+void add2(T (&A)[N][M], T (&B)[N][M], T (&R)[N][M])
 {
 	for(int i = 0; i < N; ++i)
 	{
 		for(int j = 0; j < M; ++j)
 		{
-			res[i][j] = A[i][j] + B[i][j];
+			R[i][j] = A[i][j] + B[i][j];
 		}
 	}
 }
@@ -151,3 +229,55 @@ void u_update(T (&A)[M][N], T (&c_neg)[M][P],
     mult(A,x,loc_val1);
     add4(u,loc_val1,z,c_neg,u);
 }
+
+float sum4(float vec[4]){
+	return vec[0]+vec[1]+vec[2]+vec[3];
+}
+
+float sum8(float vec[8]){
+//#pragma HLS UNROLL
+	return vec[0]+vec[1]+vec[2]+vec[3]+vec[4]+vec[5]+vec[6]+vec[7];
+}
+
+float sum16(float vec[16]){//, float vec_b[50]){
+//#pragma HLS ARRAY_PARTITION dim=1 type=cyclic factor=8 variable=vec_a
+//#pragma HLS ARRAY_PARTITION dim=1 type=cyclic factor=8 variable=vec_b
+	int i;
+	float temp[8];
+	for (i=0; i<8; i++){
+		temp[i] = vec[i] + vec[i+8];
+	}
+	return sum8(temp);
+}
+
+float vec_sum_sw(float vec[32]){//, float vec_b[50]){
+#pragma HLS ARRAY_PARTITION dim=1 type=cyclic factor=4 variable=vec
+	int i;
+	float sum = 0;
+//	float temp[16];
+	for (i=0; i<32; i++){
+#pragma HLS PIPELINE
+#pragma HLS UNROLL factor=4
+		sum += vec[i];//temp[i] = vec[i] + vec[i+16];
+	}
+	return sum; //16(temp);
+}
+
+float vec_sum_hw(float vec_in[32]){
+	int i,j;
+	//int mask[2] = {0, ~((int)0)};
+	float sum_p[4] = {0};
+	for (i=0, j=0; i<32; i++){
+#pragma HLS DEPENDENCE variable=sum_p array inter distance=8 true
+#pragma HLS PIPELINE
+		sum_p[j] += vec_in[i];
+		j = (j+1)%4; // & mask[(j+1) != 8];
+	}
+	for(i=1; i<4; i++){
+#pragma HLS UNROLL
+		sum_p[0] += sum_p[i];
+	}
+	return sum_p[0];
+}*/
+
+#endif

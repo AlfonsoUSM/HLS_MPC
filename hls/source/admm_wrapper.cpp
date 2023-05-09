@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ADMM.hpp"
-#include "ADMM_wrapper.hpp"
+#include "admm.hpp"
+#include "admm_wrapper.hpp"
 
 /*!
 @brief  wrapper for ADMM solver
@@ -22,7 +22,7 @@
 // q es Nx1
 // A es MxN
 // b es Mx1
-
+/*
 #ifdef _ADMM_SW_
 void ADMM_wrapper(int IT, DataType (&c_ADMM)[M][P], DataType (&c_neg_ADMM)[M][P], DataType (&x)[N][P], DataType (&z)[M][P], DataType (&u)[M][P])
 {
@@ -94,5 +94,5 @@ writex:
 	}
 
 }
-}
+}*/
 #endif

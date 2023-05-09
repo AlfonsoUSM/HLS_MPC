@@ -1,9 +1,9 @@
 #pragma once
-
-#include "ADMM.hpp"
-#include "init_der.hpp"
-#define N 16
-#define M 74
+/*
+#include "admm.hpp"
+//#include "init_der.hpp"
+#define N 8//16
+#define M 4//74
 #define P 1
 #define M_16 80
 #define N2 256 // N*N
@@ -38,4 +38,15 @@ typedef union converter {
 } converter_t;
 
 extern void ADMM_wrapper(DataType (&c_ADMM)[M][P], DataType (&c_neg_ADMM)[M][P], DataType (&x)[N][P], DataType (&z)[M][P], DataType (&u)[M][P]);
-#endif
+
+float Q_matlab[N][N];
+float q_matlab[N][1];
+float A_matlab[M][N];
+//float c_matlab[2501][M];
+float R_inv_matlab[N][N];
+float A_neg_matlab[M][N];
+//float c_neg_matlab[2501][N];
+float q_neg_matlab[N][1];
+float rho_neg_A_T_matlab[N][M];
+
+#endif*/
