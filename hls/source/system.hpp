@@ -13,6 +13,9 @@ typedef float data_t;
 #define M_SYS 1		// control inputs
 #define P_SYS 1		// system outputs
 
+//extern data_t d[2*N_SYS];		// [xmax; -xmin]
+//extern data_t e[2*M_SYS];		// [umax; -umin]
+
 /*
  * A is NxN
  * B is NxM

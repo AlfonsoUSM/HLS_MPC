@@ -5,6 +5,7 @@
 void qp_admm(data_t (&c_qp)[M_QP], data_t (&tk)[N_QP], data_t (&zk)[M_QP], data_t (&uk)[M_QP]){
 #pragma HLS ARRAY_PARTITION variable=tk type=complete
 	loop_admm: for(int i = 0; i < N_IT; i++){
+// #pragma HLS UNROLL factor=2
 	        tk_update(c_qp, tk, zk, uk);
 	        //zk_update(c_qp, tk, zk, uk);
 	        //uk_update(c_qp, tk, zk, uk);

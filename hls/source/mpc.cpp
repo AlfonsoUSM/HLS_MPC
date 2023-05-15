@@ -12,20 +12,34 @@
 
 
 void mpc_sparse_iteration(data_t (&r0)[P_SYS], data_t (&x0)[N_SYS], data_t (&x1)[N_SYS], data_t(&u0)[M_SYS]){
-	data_t c_hat[M] = {2};
-	data_t theta[N];
+	data_t c_hat[M_QP] = {0};
+	data_t theta[N_QP] = {0};
+	data_t zk[M_QP] = {0};
+	data_t uk[M_QP] = {0};
 	// constraint c_hat = constraint(x0, r0)
-//	mpc_sparse_constraint(r0, x0, c_hat);
-	// actuation theta = qp_solver(H,h_nau, M_hat, c_hat)
-	qp_admm(c_hat, theta);
+	mpc_sparse_constraint(r0, x0, c_hat);
+	// optimized theta = qp_solver(H,h_nau, M_hat, c_hat)
+	qp_admm(c_hat, theta, zk, uk);
 	// estimate x1
 	// x1 =
 	// u0 =
 	return;
 }
 
-void mpc_sparse_constraint(data_t (&r0)[P_SYS], data_t (&x0)[N_SYS], data_t (&c_hat)[M]){
 
+// currently the reference is 0
+void mpc_sparse_constraint(data_t (&r0)[P_SYS], data_t (&x0)[N_SYS], data_t (&c_hat)[M_QP]){
+	// follow reference currently not implemented
+	// c_hat = [g; f; -f], where f = [-x0; 0; 0; 0...] is (N_HOR+1)*N_SYS
+	for (int i=0; i<(2*N_QP); i++){
+		c_hat[i] = g[i];
+	}
+	for (int i=0; i<N_SYS; i++){
+		c_hat[(2*N_QP + i)] = -x0[i];
+	}
+	for (int i=0; i<N_SYS; i++){
+		c_hat[(2*N_QP + N_HOR*N_SYS + N_SYS + i)] = x0[i];
+	}
 	return;
 }
 
