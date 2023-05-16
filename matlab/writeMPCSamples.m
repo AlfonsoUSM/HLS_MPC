@@ -1,39 +1,77 @@
-function writeMPCSamples(n, matDir)
+function writeMPCSamples(n, matDir, plant, data_t)
 
-    outputDir = "samples/samplesMPC_N"+n+".bin";
+    binfile = "samples/"+plant+"_MPC_N"+n+".bin";
+%     txtfile = "samples/samplesMPC_N"+n+".txt";
 
-    disp(['Guardando: '+ outputDir]);
+    disp('Guardando: '+ binfile);
     load(matDir);
 
-    I = size(M_hat,1);
-    nSamples = size(u_star,2);
+    nSamples = size(uk,2);
+    H_qp = full(H);
+    C_qp = full(M_hat);
 
-    fileID = fopen(outputDir,'w');
-    fwrite(fileID,n,'double');
-    fwrite(fileID,I,'double');
-    fwrite(fileID,nSamples,'double');
-    fwrite(fileID,iterPDIP,'double');
-    fwrite(fileID,iterMINRES,'double');
-    fwrite(fileID,tol,'double');
-    
+    binfileID = fopen(binfile,'w');
 
-    fwrite(fileID,reshape(xmin',1,[]),'double');
-    fwrite(fileID,reshape(xmax',1,[]),'double');
-    fwrite(fileID,reshape(umin',1,[]),'double');
-    fwrite(fileID,reshape(umax',1,[]),'double');
-    fwrite(fileID,reshape(Acal',1,[]),'double');
-    fwrite(fileID,reshape(AcalQOcal',1,[]),'double');
-    fwrite(fileID,reshape(H',1,[]),'double');
-    fwrite(fileID,reshape(M_hat',1,[]),'double');
-    fwrite(fileID,reshape(L_invLast',1,[]),'double');
-    fwrite(fileID,reshape(A',1,[]),'double');
-    fwrite(fileID,reshape(B',1,[]),'double');
+
+%     txtfileID = fopen(txtfile,'w');
+%     % H
+%     fprintf(txtfileID, 'data_t H_qp[N_QP][N_QP] =\t{');
+%     for row = 1:(N_QP-1)
+%         fprintf(txtfileID, '{');
+%         fprintf(txtfileID, '%f, ', H_qp(row,1:(N_QP-1)));
+%         fprintf(txtfileID, '%f},\n\t\t\t\t', H_qp(row,N_QP));
+%     end
+%     fprintf(txtfileID, '{');
+%     fprintf(txtfileID, '%f, ', H_qp(N_QP,1:(N_QP-1)));
+%     fprintf(txtfileID, '%f}\n\n', H_qp(N_QP,N_QP));
+%     % h
+%     fprintf(txtfileID, 'data_t h_qp[N_QP] =\t{');
+%     fprintf(txtfileID, '%f, ', h(1:(N_QP-1)));
+%     fprintf(txtfileID, '%f}\n\n', H_qp(row,N_QP));
+%     % M_qp
+%     fprintf(txtfileID, 'data_t C_qp[N_QP][N_QP] =\t{');
+%     for row = 1:(M_QP-1)
+%         fprintf(txtfileID, '{');
+%         fprintf(txtfileID, '%f, ', C_qp(row,1:(N_QP-1)));
+%         fprintf(txtfileID, '%f},\n\t\t\t\t', C_qp(row,N_QP));
+%     end
+%     fprintf(txtfileID, '{');
+%     fprintf(txtfileID, '%f, ', C_qp(M_QP,1:(N_QP-1)));
+%     fprintf(txtfileID, '%f}\n\n', C_qp(M_QP,N_QP));
+%     % g
+%     fprintf(txtfileID, 'data_t g[(2*N_QP)] =\t{');
+%     fprintf(txtfileID, '%f, ', g(1:(2*N_QP-1)));
+%     fprintf(txtfileID, '%f}\n\n', g(row,2*N_QP));
+%     fclose(txtfileID);
+
+    fwrite(binfileID, n,'uint8');
+    fwrite(binfileID, N_SYS,'uint8');
+    fwrite(binfileID, M_SYS,'uint8');
+    fwrite(binfileID, P_SYS,'uint8');
+    fwrite(binfileID, nSamples,'uint64');
+    fwrite(binfileID, N_QP,'uint8');
+    fwrite(binfileID, M_QP,'uint8');
+    fwrite(binfileID, iter,'uint16');  
+
+    fwrite(binfileID,reshape(xmin',1,[]),data_t);
+    fwrite(binfileID,reshape(xmax',1,[]),data_t);
+    fwrite(binfileID,reshape(umin',1,[]),data_t);
+    fwrite(binfileID,reshape(umax',1,[]),data_t);
+    fwrite(binfileID,reshape(H_qp',1,[]),data_t);
+    fwrite(binfileID,reshape(h',1,[]),data_t);
+    fwrite(binfileID,reshape(C_qp',1,[]),data_t);
+    fwrite(binfileID,reshape(g',1,[]),data_t);
+    fwrite(binfileID,reshape(A',1,[]),data_t);
+    fwrite(binfileID,reshape(B',1,[]),data_t);
      
     for sample = 1:nSamples
-        fwrite(fileID,reshape(x(:,sample)',1,[]),'double');
-        fwrite(fileID,reshape(r(:,sample)',1,[]),'double');
-        fwrite(fileID,reshape(u_star(:,sample),1,[]),'double');
+%         fwrite(fileID,reshape(c_hat(:,sample)',1,[]),'double');
+        fwrite(binfileID,reshape(xk(:,sample)',1,[]),data_t);
+        fwrite(binfileID,reshape(uk(:,sample)',1,[]),data_t);
+%         fwrite(fileID,reshape(theta(:,sample),1,[]),'double');
     end
-    fclose(fileID);
+
+    fclose(binfileID);
+%     fclose(txtfileID);
 end
 
