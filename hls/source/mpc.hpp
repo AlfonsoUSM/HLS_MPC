@@ -7,7 +7,7 @@
 /*!
 @brief
 */
-void mpc_sparse_iteration(data_t (&r0)[P_SYS], data_t (&x0)[N_SYS], data_t (&x1)[N_SYS], data_t(&u0)[M_SYS]);
+void mpc_sparse_admm_iteration(data_t (&r0)[P_SYS], data_t (&x0)[N_SYS],data_t (&theta)[N_QP], data_t (&zk)[M_QP], data_t (&uk)[M_QP]);
 
 /*!
 @brief

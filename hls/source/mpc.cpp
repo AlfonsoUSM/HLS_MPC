@@ -11,18 +11,12 @@
  */
 
 
-void mpc_sparse_iteration(data_t (&r0)[P_SYS], data_t (&x0)[N_SYS], data_t (&x1)[N_SYS], data_t(&u0)[M_SYS]){
-	data_t c_hat[M_QP] = {0};
-	data_t theta[N_QP] = {0};
-	data_t zk[M_QP] = {0};
-	data_t uk[M_QP] = {0};
+void mpc_sparse_admm_iteration(data_t (&r0)[P_SYS], data_t (&x0)[N_SYS], data_t (&tk)[N_QP], data_t (&zk)[M_QP], data_t (&uk)[M_QP]){
+	data_t c_hat[M_QP] = {0};	// inicializar a 0 bien
 	// constraint c_hat = constraint(x0, r0)
 	mpc_sparse_constraint(r0, x0, c_hat);
-	// optimized theta = qp_solver(H,h_nau, M_hat, c_hat)
-	qp_admm(c_hat, theta, zk, uk);
-	// estimate x1
-	// x1 =
-	// u0 =
+	// optimized theta = qp_solver(H,h_nau, C_hat, c_hat)
+	qp_admm(c_hat, tk, zk, uk);
 	return;
 }
 

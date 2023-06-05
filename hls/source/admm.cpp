@@ -42,13 +42,13 @@ void zk_uk_update (data_t (&c_qp)[M_QP], data_t (&tk)[N_QP], data_t (&zk)[M_QP],
 #pragma HLS LOOP_MERGE
     //  zk = max{0, c - uk - M*tk};
     // uk = uk + (M*tk + zk - c);
+	mvmult<M_QP,N_QP,data_t>(C_qp, tk, Mtk);	// M*kt
 	vsub<M_QP,data_t>(c_qp, uk, temp);			// temp = c - uk
-	vsub<M_QP,data_t>(zk, c_qp, temp1);			// temp1 = zk - c
-	vadd<M_QP,data_t>(uk, temp1, temp2);		// temp2 = uk + (zk - c)
-	mvmult<M_QP,N_QP,data_t>(M_qp, tk, Mtk);	// M*kt
-	vsub<M_QP,data_t>(temp, Mtk, temp3);		// temp2 = (c - uk) - Mkt
-	max0<M_QP,data_t>(temp3, zk);				// zk
-	vadd<M_QP,data_t>(temp2, Mtk, uk);			// uk
+	vsub<M_QP,data_t>(temp, Mtk, temp1);		// temp1 = (c - uk) - Mtk
+	vadd<M_QP,data_t>(uk, Mtk, temp2);			// temp2 = uk + Mtk
+	max0<M_QP,data_t>(temp1, zk);				// zk
+	vsub<M_QP,data_t>(temp2, c_qp, temp3);		// temp3 = (uk + Mtk) - c
+	vadd<M_QP,data_t>(temp3, zk, uk);			// uk = ((uk + Mtk) - c) + zk
 	}
 	return;
 }
@@ -59,7 +59,7 @@ void zk_update(data_t (&c_qp)[M_QP], data_t (&tk)[N_QP], data_t (&zk)[M_QP], dat
 #pragma HLS LOOP_MERGE
     //  zk = max{0, c - uk - M*tk};
 	vsub<M_QP,data_t>(c_qp, uk, temp);
-	mvmult<M_QP,N_QP,data_t>(M_qp, tk, temp1);
+	mvmult<M_QP,N_QP,data_t>(C_qp, tk, temp1);
 	vsub<M_QP,data_t>(temp, temp1, temp2);
 	max0<M_QP,data_t>(temp2, zk);
     }
@@ -73,7 +73,7 @@ void uk_update(data_t (&c_qp)[M_QP], data_t (&tk)[N_QP], data_t (&zk)[M_QP], dat
     // uk = uk + (M*tk + zk - c);
 	vsub<M_QP,data_t>(zk, c_qp, temp);
 	vadd<M_QP,data_t>(uk, temp, temp1);
-	mvmult<M_QP,N_QP,data_t>(M_qp, tk, temp2);
+	mvmult<M_QP,N_QP,data_t>(C_qp, tk, temp2);
 	vadd<M_QP,data_t>(temp1, temp2, uk);
     }
 	return;

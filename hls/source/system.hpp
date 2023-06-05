@@ -5,7 +5,7 @@
 //typedef int data_t;
 typedef float data_t;
 
-#define N_HOR	4		// prediction horizon
+#define N_HOR	16//4		// prediction horizon
 #define N_IT	10		// number of iterations of QP solver
 
 ////////// System //////////
@@ -45,9 +45,9 @@ extern data_t g[(2*N_QP)];
 #error Something is wrong with how elem is defined
 #endif
 
-extern data_t H_qp[N_QP][N_QP];
-extern data_t h_qp[N_QP];
-extern data_t M_qp[M_QP][N_QP];
+extern data_t H_qp[N_QP][N_QP];		// H
+extern data_t h_qp[N_QP];			// h
+extern data_t C_qp[M_QP][N_QP];		// M_hat
 // c_qp is M_QPx1
 
 extern data_t Rho;

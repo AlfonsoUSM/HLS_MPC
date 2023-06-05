@@ -65,21 +65,24 @@ for N_HOR = Ns
     
     M_hat = [Gcal; Fcal; -Fcal];
 
-    t_AMMD = zeros(N_QP,1);
-    z_AMMD = zeros(M_QP,1);
-    u_AMMD = zeros(M_QP,1);
+    t_ADMM = zeros(N_QP,1);
+    z_ADMM = zeros(M_QP,1);
+    u_ADMM = zeros(M_QP,1);
 
     % setup
 
     for i=1:length(t)
         f(1:N_SYS,1) = -xk(:,i);
         c_hat = [g; f; -f];
-        [t_AMMD, z_AMMD, u_AMMD] = fx_qp_admm(Hcal, h, M_hat, c_hat,t_AMMD, z_AMMD, u_AMMD, rho, ADMM_iters);
-        uk(:,i) = t_AMMD((N_HOR+1)*N_SYS+1:(N_HOR+1)*N_SYS+M_SYS,1);
+        [t_ADMM, z_ADMM, u_ADMM] = fx_qp_admm(Hcal, h, M_hat, c_hat,t_ADMM, z_ADMM, u_ADMM, rho, ADMM_iters);
+        uk(:,i) = t_ADMM((N_HOR+1)*N_SYS+1:(N_HOR+1)*N_SYS+M_SYS,1);
         xk(:,i+1) = A*xk(:,i)+B*uk(:,i); % Cálculo del siguiente estado
-        theta(:,i) = t_AMMD(:,1);
+        theta(:,i) = t_ADMM(:,1);
     end
-
+    
+    R = Hcal + rho*(M_hat'*M_hat);
+    R_inv = R \ eye(size(R,1));
+    RhoMt_neg = -rho*M_hat';
 end
 
 %%
@@ -117,4 +120,7 @@ matObj.uk = uk;
 matObj.xk = xk;
 matObj.A = A;
 matObj.B = B;
+matObj.Rho = rho;
+matObj.R_inv = R_inv;
+matObj.RhoMt_neg = RhoMt_neg;
 writeMPCSamples(N_HOR, outputMat, 'motor', 'double');

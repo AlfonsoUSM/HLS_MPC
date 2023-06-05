@@ -6,7 +6,7 @@ data_t e[2*M_SYS] = {10, 10};		// [umax; -umin]
 
 data_t H_qp[N_QP][N_QP] = {2};
 data_t h_qp[N_QP] = {2};
-data_t M_qp[M_QP][N_QP] = {2};
+data_t C_qp[M_QP][N_QP] = {2};
 
 // sparse formulation
 // g = [d; d; d... dN; e; e; e...]
