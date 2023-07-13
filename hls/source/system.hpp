@@ -5,7 +5,7 @@
 //typedef int data_t;
 typedef float data_t;
 
-#define N_HOR	16//4		// prediction horizon
+#define N_HOR	4//16		// prediction horizon
 #define N_IT	10		// number of iterations of QP solver
 
 ////////// System //////////
@@ -50,9 +50,6 @@ extern data_t h_qp[N_QP];			// h
 extern data_t C_qp[M_QP][N_QP];		// M_hat
 // c_qp is M_QPx1
 
-extern data_t Rho;
-extern data_t R_inv[N_QP][N_QP];
-extern data_t RhoMt_neg[N_QP][M_QP];
 
 #endif // SYSTEM_H
 
