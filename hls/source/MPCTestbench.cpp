@@ -1,13 +1,15 @@
 #include <iostream>
 #include <fstream>
 #include "system.hpp"
+#include "admm.hpp"
 #include "mpc.hpp"
 #include <iomanip>
-//#include <math.h>
+#include <math.h>
 
 using namespace std;
 #define DISPLAY
-char file_name[] = "MPC_motor_N16_double.bin"; //"MPC_motor_N4_double.bin";
+char input_file_name[] = "MPC_motor_N4_double.bin"; //"MPC_motor_N16_double.bin"; //"MPC_motor_N2_double.bin"; //
+char output_file_name[]= "MPC_motor_double.csv";
 double threshold = 1e-0;
 // MatLab -> C++
 // single -> float
@@ -18,7 +20,7 @@ int main(int argc, char *argv[]){
 
     // number of samples to read from samples file
     // large numbers can make the test bench really slow
-    int nSamplestb = 500000;
+    int nSamplestb = 3000;//500000;
 
 //	if (argc!=2){
 //	        cerr << "Must specify .bin\n";
@@ -26,7 +28,7 @@ int main(int argc, char *argv[]){
 //	}
 
 //	ifstream samples(argv[1], ios::binary);
-	ifstream samples(file_name, ios::binary);
+	ifstream samples(input_file_name, ios::binary);
 	//check to see that the file was opened correctly:
 	if (!samples.is_open()) {
 	    cerr << "There was a problem opening the input file: ";
@@ -49,10 +51,6 @@ int main(int argc, char *argv[]){
 	data_t xmax[N_SYS];
 	data_t umin[M_SYS];
 	data_t umax[M_SYS];
-//	data_t H_qp[N_QP][N_QP];
-//	data_t h_qp[N_QP];
-//	data_t C_qp[M_QP][N_QP];
-//	data_t g[(2*N_QP)];
 	data_t A[N_SYS][N_SYS];
 	data_t B[N_SYS][M_SYS];
 
@@ -199,44 +197,42 @@ int main(int argc, char *argv[]){
     data_t u0[M_SYS] = {0};
     data_t x1[N_SYS] = {0};
 
-	data_t theta[N_QP] = {0};
-	data_t z_admm[M_QP] = {0};
-	data_t u_admm[M_QP] = {0};
+	data_t max_error = 0;
+	data_t per_error;
+	fstream fout;
+	fout.open(output_file_name, ios::out);
+	fout << "x0_1, x0_2, u0_ref, u0\n";
 
     for (int sample=0; sample<nSamplestb; sample++){	// for each sample
     	for (int i=0; i<N_SYS; i++){		// load x0
     	    x0[i] = x[sample][i];
+    	    fout << x0[i] << ",";
     	}
         for (int i=0; i<M_SYS; i++){		// load ref u0
             ref_u0[i] = ref_u[sample][i];
         }
-        mpc_sparse_admm_iteration(r0, x0, theta, z_admm, u_admm);
-    	// estimate x1
-    	for (int i=0; i<M_SYS ; i++){
-    		u0[i] = theta[(N_HOR*N_SYS+N_SYS + i)];
-    	}
-    	// x1 =
+        mpc_sparse_admm_iteration(r0, x0, x1, u0);
 
-        //cout << "sample number : " << sample << endl;
+#ifdef DISPLAY
     	cout << "sample number : " << sample << endl;
-        for (int i=0; i<M_SYS; i++){
-        	double error = (double)ref_u0[i] -(double)u0[i];	// falta fabs()
-        	cout << "expected : " << ref_u0[i] << "\tresult : " << u0[i] << "\terror : " << error << endl;
-
-//            if ((error > threshold) | (error != error)){
-//                errors++;
-//#ifdef DISPLAY
-//                cout << "sample number : " << sample << " " << i << endl;
-//                cout << expected_u[i] << "\t";
-//                cout << u0[i] << "\t";
-//                cout << error;
-//                cout << "\n";
-//#endif
-//            }
+#endif
+        for (int i=0; i<M_SYS; i++){		// error
+        	double error = fabs((double)ref_u0[i] -(double)u0[i]);
+        	double per_error = fabs((double)ref_u0[i] -(double)u0[i]) / fabs(ref_u0[i]);
+        	fout << ref_u0[i] << "," << u0[i] << ",";
+#ifdef DISPLAY
+        	cout << "expected : " << ref_u0[i] << "\tresult : " << u0[i] << "\terror : " << error << "\t=>  " << per_error << " %" << endl;
+#endif
+        	if (fabs(ref_u0[i]>0.0002)){
+        		if (error > max_error){
+        			max_error = per_error;
+        		}
+        	}
         }
+        fout << "\n";
         cout << endl;
-
     }
+    cout << "Max error : " << max_error << " %" << endl;
 
     samples.close();
 	return 0;

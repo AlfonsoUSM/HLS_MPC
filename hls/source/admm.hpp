@@ -4,6 +4,14 @@
 #include "system.hpp"
 #include "utils.hpp"
 
+extern data_t Rho;
+extern data_t R_inv[N_QP][N_QP];
+extern data_t RhoMt_neg[N_QP][M_QP];
+
+extern data_t tk_admm[N_QP];
+extern data_t zk_admm[M_QP];
+extern data_t uk_admm[M_QP];
+
 /*!
 @brief 	Alternating Method of Multipliers for solving quadratic convex optimization.
         Quadratic programing (QP) problem solution:
@@ -22,7 +30,7 @@
 @param  c_qp	M_QPx1 vector with constraints
 @return uk		N_QPx1 optimal solutions vector
 */
-void qp_admm(data_t (&c_qp)[M_QP], data_t (&tk)[N_QP], data_t (&zk)[M_QP], data_t (&uk)[M_QP]);
+void qp_admm(data_t (&c_qp)[M_QP]);
 
 /*!
 @brief

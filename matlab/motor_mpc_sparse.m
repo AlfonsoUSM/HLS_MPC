@@ -1,6 +1,6 @@
 
 
-Ns = 4;
+Ns = 2;
 
 Ts = 0.001;         % Ts: Periodo de muestreo en segundos
 tsimu = 3;         % tsimu: Tiempo de simulación en segundos
@@ -12,7 +12,7 @@ tau=1/27.92;
 A = [exp(-Ts/tau),0; tau*(1-exp(-Ts/tau)),1];
 B = [K*(1-exp(-Ts/tau));Ts*K+tau*K*(exp(-Ts/tau)-1)];
 C = [0,1];
-x0= [3;-1];          % x0: velocidad y posicion angular inicial
+x0= [4.5;1.5];          % x0: velocidad y posicion angular inicial
 
 N_SYS = size(A,1);      % numero de estados
 M_SYS = size(B,2);      % umero de actuaciones
@@ -20,8 +20,8 @@ P_SYS = size(C,1);      % numero de salidas
 
 % Datos de las restricciones
 % umin, umax en Volts:
-umin=-10;
-umax=10;
+umin=-3;
+umax=3;
 % xmin, xmax: rad/s, rad
 xmin=[-5;-2];
 xmax=[5;2];
