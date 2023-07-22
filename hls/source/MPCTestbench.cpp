@@ -20,7 +20,7 @@ int main(int argc, char *argv[]){
 
     // number of samples to read from samples file
     // large numbers can make the test bench really slow
-    int nSamplestb = 3000;//500000;
+    int nSamplestb = 10;//500000;
 
 //	if (argc!=2){
 //	        cerr << "Must specify .bin\n";
@@ -218,13 +218,13 @@ int main(int argc, char *argv[]){
 #endif
         for (int i=0; i<M_SYS; i++){		// error
         	double error = fabs((double)ref_u0[i] -(double)u0[i]);
-        	double per_error = fabs((double)ref_u0[i] -(double)u0[i]) / fabs(ref_u0[i]);
+        	double per_error = 100 * fabs((double)ref_u0[i] -(double)u0[i]) / fabs(ref_u0[i]);
         	fout << ref_u0[i] << "," << u0[i] << ",";
 #ifdef DISPLAY
         	cout << "expected : " << ref_u0[i] << "\tresult : " << u0[i] << "\terror : " << error << "\t=>  " << per_error << " %" << endl;
 #endif
-        	if (fabs(ref_u0[i]>0.0002)){
-        		if (error > max_error){
+        	if (fabs(ref_u0[i])>0.0002){
+        		if (per_error > max_error){
         			max_error = per_error;
         		}
         	}

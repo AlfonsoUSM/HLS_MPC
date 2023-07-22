@@ -43,14 +43,16 @@ void mmult(T (&A)[N][M], T (&B)[M][P], T (&R)[N][P]){
 
 template<int N, int M, typename T>
 void mvmult(T (&A)[N][M], T (&B)[M], T (&R)[N]){
-//#pragma HLS ARRAY_PARTITION dim=1 factor=4 type=cyclic variable=R
-//#pragma HLS ARRAY_PARTITION dim=1 factor=4 type=cyclic variable=B
-//#pragma HLS ARRAY_PARTITION dim=1 factor=4 type=cyclic variable=A
+//#pragma HLS ARRAY_PARTITION dim=1 factor=2 type=cyclic variable=R
+//#pragma HLS ARRAY_PARTITION dim=1 factor=2 type=cyclic variable=B
+//#pragma HLS ARRAY_PARTITION dim=1 factor=2 type=cyclic variable=A
 	mvmult_row: for(int i = 0; i < N; ++i){
-//#pragma HLS UNROLL factor=2
+//#pragma HLS UNROLL //factor=2
 //#pragma HLS PIPELINE II=1
 		R[i] = 0;
 		mvmult_column: for(int j = 0; j < M; ++j){
+//#pragma HLS UNROLL factor=3
+//#pragma HLS PIPELINE II=1
 			R[i] += A[i][j] * B[j];
 		}
 	}

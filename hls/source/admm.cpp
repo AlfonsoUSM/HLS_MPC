@@ -33,10 +33,10 @@ void tk_update(data_t (&c_qp)[M_QP], data_t (&tk)[N_QP], data_t (&zk)[M_QP], dat
     // tk = R_inv * (-rho * M^T * vx - h);
     data_t temp1[N_QP], temp2[N_QP], temp3[N_QP];
     tk_update_merge2:{
-    	mvmult4<N_QP,M_QP,data_t>(RhoMt_neg, vx, temp1);
+    	mvmult<N_QP,M_QP,data_t>(RhoMt_neg, vx, temp1);
     	vsub<N_QP,data_t>(temp1, h_qp, temp2);
     }
-    mvmult4<N_QP,N_QP,data_t>(R_inv, temp2, tk);
+    mvmult<N_QP,N_QP,data_t>(R_inv, temp2, tk);
     return;
 }
 
@@ -46,7 +46,7 @@ void zk_uk_update (data_t (&c_qp)[M_QP], data_t (&tk)[N_QP], data_t (&zk)[M_QP],
 	zk_uk_update_merge:{
     //  zk = max{0, c - uk - C*tk};
     // uk = uk + (C*tk + zk - c);
-	mvmult4<M_QP,N_QP,data_t>(C_qp, tk, Ctk);	// Ctk = C*kt
+	mvmult<M_QP,N_QP,data_t>(C_qp, tk, Ctk);	// Ctk = C*kt
 	vsub<M_QP,data_t>(c_qp, uk, temp);			// temp = c - uk
 	vsub<M_QP,data_t>(temp, Ctk, temp1);		// temp1 = (c - uk) - Ctk
 	vadd<M_QP,data_t>(uk, Ctk, temp2);			// temp2 = uk + Ctk
