@@ -12,7 +12,7 @@
 
 
 void mpc_sparse_admm_iteration(data_t (&r0)[P_SYS], data_t (&x0)[N_SYS], data_t (&x1)[N_SYS], data_t (&u0)[M_SYS]){
-	data_t c_hat[M_QP] = {0};
+	data_t c_hat[M_QP] = {0};// 5.0, 2.0, 5.0, 2.0, 5.0, 2.0, 5.0, 2.0, 5.0, 2.0, 5.0, 2.0, 5.0, 2.0, 5.0, 2.0, 5.0, 2.0, 5.0, 2.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0,-4.5,-1.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.5, 1.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 	// constraint c_hat = constraint(x0, r0)
 	mpc_sparse_constraint(r0, x0, c_hat);
 	// optimized theta = qp_solver(H,h_nau, C_hat, c_hat)
