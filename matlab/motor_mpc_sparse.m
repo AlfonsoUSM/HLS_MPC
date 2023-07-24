@@ -1,6 +1,6 @@
 
 
-Ns = 2;
+Ns = 4;
 
 Ts = 0.001;         % Ts: Periodo de muestreo en segundos
 tsimu = 3;         % tsimu: Tiempo de simulación en segundos
