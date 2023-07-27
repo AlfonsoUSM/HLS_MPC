@@ -39,7 +39,6 @@ void tk_update(const data_t (&c_qp)[M_QP], const data_t (&RhoMt_neg)[N_QP][M_QP]
 }
 
 void zk_uk_update (const data_t (&c_qp)[M_QP], const data_t (&C_qp)[M_QP][N_QP], const data_t (&tk)[N_QP], data_t (&zk)[M_QP], data_t (&uk)[M_QP]){
-//#pragma HLS ARRAY_PARTITION variable=tk type=complete
 	data_t Ctk[M_QP], temp[M_QP], temp1[M_QP], temp2[M_QP], temp3[M_QP];
 	zk_uk_update_merge:{
     //  zk = max{0, c - uk - C*tk};
