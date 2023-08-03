@@ -1,33 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-/* ADMM Algorithm
-    // X Minimization
-    v_x = z - c + u;
-    x = R_inv * (-A.transpose()*v_x*rho - q);
-
-    // Z Minimization
-    z = (-A*x - u + c).max(0);
-
-    // Update the scaled dual variable
-    u = u + (A*x + z - c);
-
-Variables:
-    z
-    u
-    x
-    -u
-
-Parameters to save (fixed over iterations):
-    -c
-    R_inv
-    -A^T*rho
-    -q
-    -A
-    c
-    A
-*/
-
+/*
 template<int N, int M, int P, typename T>
 void mmult(const T (&A)[N][M], const T (&B)[M][P], T (&R)[N][P]){
 	mmult_row: for(int i = 0; i < N; ++i){
@@ -40,32 +14,30 @@ void mmult(const T (&A)[N][M], const T (&B)[M][P], T (&R)[N][P]){
 	}
 	return;
 }
+*/
 
 template<int N, int M, typename T>
 void mvmult(const T (&A)[N][M],const T (&B)[M], T (&R)[N]){
+//#pragma HLS ARRAY_PARTITION variable=R type=cyclic factor=2
 	mvmult_row: for(int i = 0; i < N; ++i){
-//#pragma HLS UNROLL //factor=2
+//#pragma HLS UNROLL factor=2
 //#pragma HLS PIPELINE II=1
 		R[i] = 0;
 		mvmult_column: for(int j = 0; j < M; ++j){
+//#pragma HLS UNROLL
 			R[i] += A[i][j] * B[j];
 		}
 	}
 	return;
 }
 
-
+/*
 template<int N, int M, typename T>
 void mvmult3(T (&A)[N][M], T (&B)[M], T (&R)[N]){
-//#pragma HLS ARRAY_PARTITION dim=1 factor=4 type=cyclic variable=R
-//#pragma HLS ARRAY_PARTITION dim=1 factor=4 type=cyclic variable=B
-//#pragma HLS ARRAY_PARTITION dim=1 factor=4 type=cyclic variable=A
 	mvmult_init: for(int i = 0; i < N; ++i){
 		R[i] = 0;
 	}
 	mvmult_column: for(int j = 0; j < M; ++j){
-//#pragma HLS UNROLL factor=2
-//#pragma HLS PIPELINE II=1
 		mvmult_row: for(int i = 0; i < N; ++i){
 #pragma HLS PIPELINE II=1
 #pragma HLS UNROLL factor=2
@@ -77,15 +49,8 @@ void mvmult3(T (&A)[N][M], T (&B)[M], T (&R)[N]){
 
 template<int N, int M, typename T>
 void mvmult4(T (&A)[N][M], T (&B)[M], T (&R)[N]){
-//#pragma HLS ARRAY_PARTITION dim=1 factor=4 type=cyclic variable=R
-//#pragma HLS ARRAY_PARTITION dim=1 factor=4 type=cyclic variable=B
-//#pragma HLS ARRAY_PARTITION dim=1 factor=4 type=cyclic variable=A
 	mvmult_column: for(int j = 0; j < M; ++j){
-//#pragma HLS UNROLL factor=2
-//#pragma HLS PIPELINE II=1
 		mvmult_row: for(int i = 0; i < N; ++i){
-#pragma HLS PIPELINE II=1
-#pragma HLS UNROLL factor=2
 			if (j == 0){
 				R[i] = A[i][j] * B[j];
 			}
@@ -116,11 +81,11 @@ void msub(const T (&A)[N][M], const T (&B)[N][M], T (&R)[N][M]){
 	}
 	return;
 }
+*/
 
 template<int N, typename T>
 void vadd(const T (&A)[N], const T (&B)[N], T (&R)[N]){
 	vadd_row: for(int i = 0; i < N; ++i){
-//#pragma HLS PIPELINE II=1
 		R[i] = A[i] + B[i];
 	}
 	return;
@@ -129,7 +94,6 @@ void vadd(const T (&A)[N], const T (&B)[N], T (&R)[N]){
 template<int N, typename T>
 void vsub(const T (&A)[N], const T (&B)[N], T (&R)[N]){
 	vsub_row: for(int i = 0; i < N; ++i){
-//#pragma HLS PIPELINE II=1
 		R[i] = A[i] - B[i];
 	}
 	return;
@@ -138,7 +102,6 @@ void vsub(const T (&A)[N], const T (&B)[N], T (&R)[N]){
 template<int N, typename T>
 void max0(const T (&A)[N], T (&R)[N]){
     max0_row: for (int i = 0; i < N; i++){
-//#pragma HLS PIPELINE II=1
         if (A[i] > 0){
             R[i] = A[i];
         }
