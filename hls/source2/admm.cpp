@@ -54,6 +54,7 @@ void zk_uk_update (const data_t (&c_qp)[M_QP], const data_t (&C_qp)[M_QP][N_QP],
 	return;
 }
 
+/*
 void zk_update(const data_t (&c_qp)[M_QP], const data_t (&C_qp)[M_QP][N_QP], const data_t (&tk)[N_QP], data_t (&zk)[M_QP], const data_t (&uk)[M_QP]){
 	data_t temp[M_QP], temp1[M_QP], temp2[M_QP];
     {
@@ -79,4 +80,4 @@ void uk_update(const data_t (&c_qp)[M_QP], const data_t (&C_qp)[M_QP][N_QP], con
     }
 	return;
 }
-
+*/
