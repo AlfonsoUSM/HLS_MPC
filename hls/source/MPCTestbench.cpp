@@ -20,7 +20,7 @@ int main(int argc, char *argv[]){
 
     // number of samples to read from samples file
     // large numbers can make the test bench really slow
-    int nSamplestb = 30;//500000;
+    int nSamplestb = 3;//500000;
 
 //	if (argc!=2){
 //	        cerr << "Must specify .bin\n";
@@ -158,7 +158,7 @@ int main(int argc, char *argv[]){
     for (int r=0; r<N_QP; r++){	// load R_inv
     	for (int c=0; c<N_QP; c++){
         	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-        	//R_inv[r][c] = (data_t)aux2;
+        	R_inv[r][c] = (data_t)aux2;
     	}
     }
 
