@@ -122,17 +122,17 @@ int main(int argc, char *argv[]){
     for (int r=0; r<N_QP; r++){	// load H_qp
     	for (int c=0; c<N_QP; c++){
         	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-    		H_qp[r][c] = (data_t)aux2;
+    		//Q[r][c] = (data_t)aux2;
     	}
     }
     for (int r=0; r<N_QP; r++){	// load h_qp
     	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-    	h_qp[r] = (data_t)aux2;
+    	q[r] = (data_t)aux2;
     }
 	for (int r=0; r<M_QP; r++){	// load C_qp
 		for (int c=0; c<N_QP; c++){
 	    	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-			C_qp[r][c] = (data_t)aux2;
+			H[r][c] = (data_t)aux2;
 		}
     }
     for (int r=0; r<(2*N_QP); r++){	// load g
@@ -153,19 +153,19 @@ int main(int argc, char *argv[]){
     }
 
 	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-	Rho = (data_t)aux2;
+	//rho = (data_t)aux2;
 
     for (int r=0; r<N_QP; r++){	// load R_inv
     	for (int c=0; c<N_QP; c++){
         	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-        	R_inv[r][c] = (data_t)aux2;
+        	//R_inv[r][c] = (data_t)aux2;
     	}
     }
 
     for (int r=0; r<N_QP; r++){	// load RhoMt_neg
     	for (int c=0; c<M_QP; c++){
         	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-        	RhoMt_neg[r][c] = (data_t)aux2;
+        	RhoHt_neg[r][c] = (data_t)aux2;
     	}
     }
 
@@ -211,7 +211,7 @@ int main(int argc, char *argv[]){
         for (int i=0; i<M_SYS; i++){		// load ref u0
             ref_u0[i] = ref_u[sample][i];
         }
-        mpc_sparse_admm_iteration(r0, x0, x1, u0);
+        mpc(x0, u0);
 
 #ifdef DISPLAY
     	cout << "sample number : " << sample << endl;
