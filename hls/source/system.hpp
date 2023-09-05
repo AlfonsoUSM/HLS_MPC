@@ -1,10 +1,7 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-typedef float data_t;
-#define SPARSE
 
-#define N_HOR	4//16		// prediction horizon
 #define N_IT	10		// number of iterations of QP solver
 
 ////////// System //////////
@@ -12,28 +9,21 @@ typedef float data_t;
 #define M_SYS 1		// control inputs
 #define P_SYS 1		// system outputs
 
-//extern data_t d[2*N_SYS];		// [xmax; -xmin]
-//extern data_t e[2*M_SYS];		// [umax; -umin]
-
-/*
- * A is NxN
- * B is NxM
- * C is PxN
- *
- * Gamma is MxM
- * Omega is NxN
- */
+#define N_HOR	4//16		// prediction horizon
+#define DENSE//SPARSE
+typedef float data_t;
 
 ////////// MPC Formulation //////////
-//#if !defined DENSE and !defined SPARSE
-//#define DENSE
-//#endif
 
 #if defined DENSE		// Dense formulation
-#define N_QP N_SYS*N_HOR							// Number of optimization values
+#define N_QP M_SYS*N_HOR							// Number of optimization values
 #define M_QP (2 * N_HOR * (N_SYS + M_SYS))			// Number of optimization constraints
-data_t a_tilde[N_HOR];
-data_t b_tilde[N_HOR];
+extern data_t a_neg[N_QP];
+extern data_t b[N_QP];
+extern data_t d[N_SYS*N_HOR];
+extern data_t e[N_SYS*N_HOR];
+extern data_t D[N_SYS*N_HOR][N_SYS];
+extern data_t G[N_SYS][N_QP];
 
 #elif defined SPARSE	// Sparse formulation
 #define N_QP (N_HOR * (N_SYS + M_SYS) + N_SYS)					// Number of optimization variables

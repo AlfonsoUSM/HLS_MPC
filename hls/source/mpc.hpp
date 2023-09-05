@@ -14,7 +14,7 @@ void mpc(data_t (&x0)[N_SYS], data_t (&u0)[M_SYS]);
 /*!
 @brief
 */
-void mpc_dense_constraint(data_t (&r0)[P_SYS], data_t (&x0)[N_SYS], data_t (&h)[M_QP]);
+void mpc_dense_constraint(data_t (&r0)[P_SYS], data_t (&x0)[N_SYS], data_t (&q)[N_QP], data_t (&h)[M_QP]);
 
 /*!
 @brief
@@ -45,7 +45,7 @@ extern data_t uk_admm[M_QP];
 @param  h		M_QPx1 vector with constraints
 @return uk		N_QPx1 optimal solutions vector
 */
-void qp_admm(data_t (&h)[M_QP]);
+void qp_admm(data_t (&q)[N_QP], data_t (&h)[M_QP]);
 
 #endif // MPC_H
 

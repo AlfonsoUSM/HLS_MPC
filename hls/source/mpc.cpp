@@ -16,27 +16,56 @@ void mpc(data_t (&x0)[N_SYS], data_t (&u0)[M_SYS]){
 	data_t r0[P_SYS] = {0};
 	// constraint c_hat = constraint(x0, r0)
 #if defined DENSE
-	mpc_dense_constraint(r0, x0, h);
+	data_t q_hat[N_QP];
+	mpc_dense_constraint(r0, x0, q_hat, h);
 #else
+	data_t (&q_hat)[N_QP] = q;
 	mpc_sparse_constraint(r0, x0, h);
 #endif
 	// optimized theta = qp_solver(H,h_nau, C_hat, c_hat)
-	qp_admm(h);
+	qp_admm(q_hat, h);
 	for (int i=0; i<M_SYS ; i++){
-		u0[i] = tk_admm[(N_HOR*N_SYS+N_SYS + i)];
+		u0[i] = tk_admm[i];
 	}
 	// estimate x1
 	return;
 }
 
-void mpc_dense_constraint(data_t (&r0)[P_SYS], data_t (&x0)[N_SYS], data_t (&h)[M_QP]){
+#if defined DENSE
+void mpc_dense_constraint(data_t (&r0)[P_SYS], data_t (&x0)[N_SYS], data_t (&q)[N_QP], data_t (&h)[M_QP]){
 	// follow reference currently not implemented
+	// q = (x0'*G)';
+	vmmult<N_SYS,N_QP,data_t>(x0, G, q);
+    // f = [e-D*x0; D*x0-d];
+	data_t temp[N_SYS*N_HOR], f1[N_SYS*N_HOR], f2[N_SYS*N_HOR];
+	mvmult<(N_SYS*N_HOR),N_SYS,data_t>(D, x0, temp);
+	vsub<(N_SYS*N_HOR),data_t>(e, temp, f1);
+	vsub<(N_SYS*N_HOR),data_t>(temp, d, f2);
+    // h = [f; b; -a];
+	int i = 0;
+	constraint1: for (int j=0; j<(N_SYS*N_HOR); j++){
+		h[i] = f1[j];
+		i++;
+	}
+	constraint2: for (int j=0; j<(N_SYS*N_HOR); j++){
+		h[i] = f2[j];
+		i++;
+	}
+	constraint3: for (int j=0; j<N_QP; j++){
+		h[i] = b[j];
+		i++;
+	}
+	constraint4: for (int j=0; j<N_QP; j++){
+		h[i] = a_neg[j];
+		i++;
+	}
 	return;
 }
 
+#else
 void mpc_sparse_constraint(data_t (&r0)[P_SYS], data_t (&x0)[N_SYS], data_t (&h)[M_QP]){
 	// follow reference currently not implemented
-	// c_hat = [g; f; -f], where f = [-x0; 0; 0; 0...] is (N_HOR+1)*N_SYS
+	// h = [g; f; -f], where f = [-x0; 0; 0; 0...] is (N_HOR+1)*N_SYS
 	constraint1: for (int i=0; i<(2*N_QP); i++){
 		h[i] = g[i];
 	}
@@ -48,8 +77,9 @@ void mpc_sparse_constraint(data_t (&r0)[P_SYS], data_t (&x0)[N_SYS], data_t (&h)
 	}
 	return;
 }
+#endif
 
-void qp_admm(data_t (&h)[M_QP]){
+void qp_admm(data_t (&q)[N_QP], data_t (&h)[M_QP]){
 	loop_admm: for(int i = 0; i < N_IT; i++){
 			data_t vx[M_QP];
 			data_t temp[M_QP];

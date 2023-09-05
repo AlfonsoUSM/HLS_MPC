@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include "system.hpp"
-#include "admm.hpp"
 #include "mpc.hpp"
 #include <iomanip>
 #include <math.h>
@@ -79,24 +78,18 @@ int main(int argc, char *argv[]){
 
     // check if sN_HOR, sN_QP and sM_QP from .bin file match with N_HOR, N_QP and M_QP from system.hpp
     if (sN_HOR != N_HOR){
-        cerr << "N_HOR from " << argv[1] << " (" << sN_HOR << ") does not match N_HOR from system.hpp (";
-        cerr << N_HOR << ")" << endl;
-        cout << "N_HOR from " << argv[1] << " (" << sN_HOR << ") does not match N_HOR from system.hpp (";
+        cout << "N_HOR from sample file (" << sN_HOR << ") does not match N_HOR from system.hpp (";
         cout << N_HOR << ")" << endl;
         return 1;
     }
     if (sN_QP != N_QP){
-        cerr << "N_QP from " << argv[1] << " (" << sN_QP << ")does not match N_QP from system.hpp (";
+        cerr << "N_QP from sample file (" << sN_QP << ")does not match N_QP from system.hpp (";
         cerr << N_QP << ")" << endl;
-        cout << "N_QP from " << argv[1] << " (" << sN_QP << ")does not match N_QP from system.hpp (";
-        cout << N_QP << ")" << endl;
         return 1;
     }
     if (sM_QP != M_QP){
-        cerr << "M_QP from " << argv[1] << " (" << sM_QP << ")does not match M_QP from system.hpp (";
+        cerr << "M_QP from sample file (" << sM_QP << ")does not match M_QP from system.hpp (";
         cerr << M_QP << ")" << endl;
-        cout << "M_QP from " << argv[1] << " (" << sM_QP << ")does not match M_QP from system.hpp (";
-        cout << M_QP << ")" << endl;
         return 1;
     }
 
@@ -119,25 +112,25 @@ int main(int argc, char *argv[]){
     	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
     	umax[r] = (data_t)aux2;
     }
-    for (int r=0; r<N_QP; r++){	// load H_qp
-    	for (int c=0; c<N_QP; c++){
+    for (int r=0; r<sN_QP; r++){	// load H_qp
+    	for (int c=0; c<sN_QP; c++){
         	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
     		//Q[r][c] = (data_t)aux2;
     	}
     }
-    for (int r=0; r<N_QP; r++){	// load h_qp
+    for (int r=0; r<sN_QP; r++){	// load h_qp
     	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-    	q[r] = (data_t)aux2;
+    	//q[r] = (data_t)aux2;
     }
-	for (int r=0; r<M_QP; r++){	// load C_qp
-		for (int c=0; c<N_QP; c++){
+	for (int r=0; r<sM_QP; r++){	// load C_qp
+		for (int c=0; c<sN_QP; c++){
 	    	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-			H[r][c] = (data_t)aux2;
+			//H[r][c] = (data_t)aux2;
 		}
     }
-    for (int r=0; r<(2*N_QP); r++){	// load g
+    for (int r=0; r<(2*sN_QP); r++){	// load g
     	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-    	g[r] = (data_t)aux2;
+    	//g[r] = (data_t)aux2;
     }
 	for (int r=0; r<N_SYS; r++){	// load A - Ignored in this testbench
 		for (int c=0; c<N_SYS; c++){
@@ -155,17 +148,17 @@ int main(int argc, char *argv[]){
 	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
 	//rho = (data_t)aux2;
 
-    for (int r=0; r<N_QP; r++){	// load R_inv
-    	for (int c=0; c<N_QP; c++){
+    for (int r=0; r<sN_QP; r++){	// load R_inv
+    	for (int c=0; c<sN_QP; c++){
         	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
         	//R_inv[r][c] = (data_t)aux2;
     	}
     }
 
-    for (int r=0; r<N_QP; r++){	// load RhoMt_neg
-    	for (int c=0; c<M_QP; c++){
+    for (int r=0; r<sN_QP; r++){	// load RhoMt_neg
+    	for (int c=0; c<sM_QP; c++){
         	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-        	RhoHt_neg[r][c] = (data_t)aux2;
+        	//RhoHt_neg[r][c] = (data_t)aux2;
     	}
     }
 
