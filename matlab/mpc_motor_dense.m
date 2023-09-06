@@ -1,7 +1,7 @@
 %% MPC for DC-DC motor, dense formulation
 % ===============================================================================
 % Alfonso Cortes Neira - Universidad Técnica Federico Santa María
-% 04-09-2023
+% 06-09-2023
 % Based on the work by Andrew Morrison
 % https://github.com/morrisort/embeddedMPC/
 % ===============================================================================
@@ -43,7 +43,7 @@ Omega=C'*C;
 %r = square(2*pi*f*t);
 
 ADMM_iters = 10;
-rho = single(100);%single(0.10070947);%single(62.963413);%
+rho = single(0.10070947);%single(62.963413);%
 
 %% Dense Formulation
 
@@ -91,7 +91,7 @@ end
 
 R = Q + rho*(H'*H);
 R_inv = R \ eye(size(R,1));
-RhoHt_neg = -rho*H';            % RhoHt_neg
+W = -rho*H';            % RhoHt_neg
 
 %% Plot
 
@@ -103,38 +103,93 @@ plot(uk(1,:))
 grid on
 
 
-%%
+%% Generate C++ file with Global Variables (constants)
 
+txtfile = "samples/MPC_motor_dense_N"+N_HOR+".txt";
+txtfileID = fopen(txtfile,'w');
+
+fx_cpp_print_matrix(txtfileID, H, "data_t H[M_QP][N_QP]", M_QP, N_QP)
+fx_cpp_print_matrix(txtfileID, -a, "data_t a_neg[N_QP]", N_QP)
+fx_cpp_print_matrix(txtfileID, b, "data_t b[N_QP]", N_QP)
+fx_cpp_print_matrix(txtfileID, d, "data_t d[N_SYS*N_HOR]", (N_SYS*N_HOR))
+fx_cpp_print_matrix(txtfileID, e, "data_t e[N_SYS*N_HOR]", (N_SYS*N_HOR))
+fx_cpp_print_matrix(txtfileID, D, "data_t D[N_SYS*N_HOR][N_SYS]", (N_SYS*N_HOR), N_SYS)
+fx_cpp_print_matrix(txtfileID, G, "data_t G[N_SYS][N_QP]", N_SYS, N_QP)
+
+fx_cpp_print_matrix(txtfileID, R_inv, "data_t R_inv[N_QP][N_QP]", N_QP, N_QP)
+fx_cpp_print_matrix(txtfileID, W, "data_t W[N_QP][M_QP]", N_QP, M_QP)
+
+fclose(txtfileID);
+
+%% Generate .bin file with samples
+
+binfile = "samples/MPC_motor_dense_N"+N_HOR+".bin";
+binfileID = fopen(binfile,'w');
+
+nSamples = length(k);
+data_t = 'single';
 A = single(A);
 B = single(B);
 
+fwrite(binfileID, N_SYS,'uint8');
+fwrite(binfileID, M_SYS,'uint8');
+fwrite(binfileID, P_SYS,'uint8');
+fwrite(binfileID, N_QP,'uint8');
+fwrite(binfileID, M_QP,'uint8');
+fwrite(binfileID, N_HOR,'uint8');
+fwrite(binfileID, ADMM_iters,'uint16');
+fwrite(binfileID, nSamples,'uint16');  
+fwrite(binfileID, 0,'uint16');
 
-outputMat = 'samples/MPC_motor_dense_N'+ string(N_HOR) +'.mat';
-matObj = matfile(outputMat,'Writable',true);
-matObj.N_SYS = N_SYS;
-matObj.M_SYS = M_SYS;
-matObj.P_SYS = P_SYS;
-matObj.iter = ADMM_iters;
-matObj.N_QP = N_QP;
-matObj.M_QP = M_QP;
+% fwrite(binfileID,reshape(xmin',1,[]),data_t);
+% fwrite(binfileID,reshape(xmax',1,[]),data_t);
+% fwrite(binfileID,reshape(umin',1,[]),data_t);
+% fwrite(binfileID,reshape(umax',1,[]),data_t);
+% fwrite(binfileID,reshape(Q',1,[]),data_t);
+% fwrite(binfileID,reshape(H',1,[]),data_t);
+fwrite(binfileID,reshape(A',1,[]),data_t);
+fwrite(binfileID,reshape(B',1,[]),data_t);
+% fwrite(binfileID,rho,data_t);
+% fwrite(binfileID,reshape(R_inv',1,[]),data_t);
+% fwrite(binfileID,reshape(RhoHt_neg',1,[]),data_t);
+ 
+for sample = 1:nSamples
+%         fwrite(fileID,reshape(c_hat(:,sample)',1,[]),'double');
+    fwrite(binfileID,reshape(xk(:,sample)',1,[]),data_t);
+    fwrite(binfileID,reshape(uk(:,sample)',1,[]),data_t);
+%         fwrite(fileID,reshape(theta(:,sample),1,[]),'double');
+end
 
-matObj.umin = umin;
-matObj.umax = umax;
-matObj.xmin = xmin;
-matObj.xmax = xmax;
-matObj.Q = K;
-matObj.q = q;
-matObj.H = Q;
-matObj.g = g;
-% matObj.theta = theta;
-matObj.uk = uk;
-matObj.xk = xk;
-matObj.A = A;
-matObj.B = B;
-matObj.rho = rho;
-matObj.R_inv = R_inv;
-matObj.RhoHt_neg = RhoHt_neg;
-writeMPCSamples(N_HOR, outputMat, 'motor', 'sparse', 'single');
+fclose(binfileID);
+
+%%
+
+% outputMat = 'samples/MPC_motor_dense_N'+ string(N_HOR) +'.mat';
+% matObj = matfile(outputMat,'Writable',true);
+% matObj.N_SYS = N_SYS;
+% matObj.M_SYS = M_SYS;
+% matObj.P_SYS = P_SYS;
+% matObj.iter = ADMM_iters;
+% matObj.N_QP = N_QP;
+% matObj.M_QP = M_QP;
+% 
+% matObj.umin = umin;
+% matObj.umax = umax;
+% matObj.xmin = xmin;
+% matObj.xmax = xmax;
+% matObj.Q = K;
+% matObj.q = q;
+% matObj.H = Q;
+% matObj.g = g;
+% % matObj.theta = theta;
+% matObj.uk = uk;
+% matObj.xk = xk;
+% matObj.A = A;
+% matObj.B = B;
+% matObj.rho = rho;
+% matObj.R_inv = R_inv;
+% matObj.W = W;
+% writeMPCSamples(N_HOR, outputMat, 'motor', 'sparse', 'single');
     
 
 

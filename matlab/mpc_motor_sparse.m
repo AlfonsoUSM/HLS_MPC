@@ -1,7 +1,7 @@
 %% MPC for DC-DC motor, sparse formulation
 % ===============================================================================
 % Alfonso Cortes Neira - Universidad Técnica Federico Santa María
-% 03-09-2023
+% 06-09-2023
 % Based on the work by Andrew Morrison and Juan Escárate
 % https://github.com/morrisort/embeddedMPC/
 % ===============================================================================
@@ -94,9 +94,10 @@ end
 
 R = Q + rho*(H'*H);
 R_inv = R \ eye(size(R,1));
-RhoHt_neg = -rho*H';            % RhoHt_neg
+W = -rho*H';            % RhoHt_neg
 
-%%
+%% Plot
+
 figure
 plot(xk(1,:))
 hold on
@@ -104,35 +105,89 @@ plot(xk(2,:))
 plot(uk(1,:))
 grid on
 
+%% Generate C++ file with Global Variables (constants)
 
-%%
+txtfile = "samples/MPC_motor_sparse_N"+N_HOR+".txt";
+txtfileID = fopen(txtfile,'w');
 
+fx_cpp_print_matrix(txtfileID, q, "data_t q[N_QP]", N_QP)
+fx_cpp_print_matrix(txtfileID, H, "data_t H[M_QP][N_QP]", M_QP, N_QP)
+fx_cpp_print_matrix(txtfileID, g, "data_t g[2*N_QP]", (2*N_QP))
+
+fx_cpp_print_matrix(txtfileID, R_inv, "data_t R_inv[N_QP][N_QP]", N_QP, N_QP)
+fx_cpp_print_matrix(txtfileID, W, "data_t W[N_QP][M_QP]", N_QP, M_QP)
+
+fclose(txtfileID);
+
+%% Generate .bin file with samples
+
+binfile = "samples/MPC_motor_sparse_N"+N_HOR+".bin";
+binfileID = fopen(binfile,'w');
+
+nSamples = length(k);
+data_t = 'single';
 A = single(A);
 B = single(B);
 
-outputMat = 'samples/MPC_motor_sparse_N'+ string(N_HOR) +'.mat';
-matObj = matfile(outputMat,'Writable',true);
-matObj.N_SYS = N_SYS;
-matObj.M_SYS = M_SYS;
-matObj.P_SYS = P_SYS;
-matObj.iter = ADMM_iters;
-matObj.N_QP = N_QP;
-matObj.M_QP = M_QP;
+fwrite(binfileID, N_SYS,'uint8');
+fwrite(binfileID, M_SYS,'uint8');
+fwrite(binfileID, P_SYS,'uint8');
+fwrite(binfileID, N_QP,'uint8');
+fwrite(binfileID, M_QP,'uint8');
+fwrite(binfileID, N_HOR,'uint8');
+fwrite(binfileID, ADMM_iters,'uint16');
+fwrite(binfileID, nSamples,'uint16');  
+fwrite(binfileID, 0,'uint16');
 
-matObj.umin = umin;
-matObj.umax = umax;
-matObj.xmin = xmin;
-matObj.xmax = xmax;
-matObj.Q = Q;
-matObj.q = q;
-matObj.H = H;
-matObj.g = g;
-% matObj.theta = theta;
-matObj.uk = uk;
-matObj.xk = xk;
-matObj.A = A;
-matObj.B = B;
-matObj.rho = rho;
-matObj.R_inv = R_inv;
-matObj.RhoHt_neg = RhoHt_neg;
-writeMPCSamples(N_HOR, outputMat, 'motor', 'sparse', 'single');
+% fwrite(binfileID,reshape(xmin',1,[]),data_t);
+% fwrite(binfileID,reshape(xmax',1,[]),data_t);
+% fwrite(binfileID,reshape(umin',1,[]),data_t);
+% fwrite(binfileID,reshape(umax',1,[]),data_t);
+% fwrite(binfileID,reshape(Q',1,[]),data_t);
+% fwrite(binfileID,reshape(H',1,[]),data_t);
+fwrite(binfileID,reshape(A',1,[]),data_t);
+fwrite(binfileID,reshape(B',1,[]),data_t);
+% fwrite(binfileID,rho,data_t);
+% fwrite(binfileID,reshape(R_inv',1,[]),data_t);
+% fwrite(binfileID,reshape(RhoHt_neg',1,[]),data_t);
+ 
+for sample = 1:nSamples
+%         fwrite(fileID,reshape(c_hat(:,sample)',1,[]),'double');
+    fwrite(binfileID,reshape(xk(:,sample)',1,[]),data_t);
+    fwrite(binfileID,reshape(uk(:,sample)',1,[]),data_t);
+%         fwrite(fileID,reshape(theta(:,sample),1,[]),'double');
+end
+
+fclose(binfileID);
+
+%%
+% 
+% A = single(A);
+% B = single(B);
+% 
+% outputMat = 'samples/MPC_motor_sparse_N'+ string(N_HOR) +'.mat';
+% matObj = matfile(outputMat,'Writable',true);
+% matObj.N_SYS = N_SYS;
+% matObj.M_SYS = M_SYS;
+% matObj.P_SYS = P_SYS;
+% matObj.iter = ADMM_iters;
+% matObj.N_QP = N_QP;
+% matObj.M_QP = M_QP;
+% 
+% matObj.umin = umin;
+% matObj.umax = umax;
+% matObj.xmin = xmin;
+% matObj.xmax = xmax;
+% matObj.Q = Q;
+% matObj.q = q;
+% matObj.H = H;
+% matObj.g = g;
+% % matObj.theta = theta;
+% matObj.uk = uk;
+% matObj.xk = xk;
+% matObj.A = A;
+% matObj.B = B;
+% matObj.rho = rho;
+% matObj.R_inv = R_inv;
+% matObj.RhoHt_neg = RhoHt_neg;
+% writeMPCSamples(N_HOR, outputMat, 'motor', 'sparse', 'single');
