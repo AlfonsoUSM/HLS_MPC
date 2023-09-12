@@ -10,7 +10,7 @@
 #define P_SYS 1		// system outputs
 
 #define N_HOR	4//16		// prediction horizon
-#define DENSE//SPARSE
+#define DENSE//SPARSE//
 typedef float data_t;
 
 ////////// MPC Formulation //////////
@@ -45,7 +45,7 @@ extern data_t H[M_QP][N_QP];		// H_hat
 
 //rho is not required
 extern data_t R_inv[N_QP][N_QP];
-extern data_t RhoHt_neg[N_QP][M_QP];
+extern data_t W[N_QP][M_QP];		// RhoHt_neg
 
 
 #endif // SYSTEM_H

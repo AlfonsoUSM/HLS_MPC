@@ -7,19 +7,23 @@
 
 using namespace std;
 #define DISPLAY
-char input_file_name[] = "MPC_motor_N4_double.bin"; //"MPC_motor_N16_double.bin"; //"MPC_motor_N2_double.bin"; //
-char output_file_name[]= "MPC_motor_double.csv";
+#ifdef DENSE
+char input_file_name[] = "MPC_motor_dense_N4.bin";
+#else
+char input_file_name[] = "MPC_motor_sparse_N4.bin";
+#endif
+char output_file_name[]= "MPC_motor_dense.csv";
 double threshold = 1e-0;
 // MatLab -> C++
 // single -> float
 // double -> double
-typedef double sample_data_t;
+typedef float sample_data_t;
 
 int main(int argc, char *argv[]){
 
     // number of samples to read from samples file
     // large numbers can make the test bench really slow
-    int nSamplestb = 3;//500000;
+    int nSamplestb = 3;//10000;
 
 //	if (argc!=2){
 //	        cerr << "Must specify .bin\n";
@@ -46,10 +50,6 @@ int main(int argc, char *argv[]){
 
     ///////////////// Read data from golden reference ///////////////////
 
-	data_t xmin[N_SYS];
-	data_t xmax[N_SYS];
-	data_t umin[M_SYS];
-	data_t umax[M_SYS];
 	data_t A[N_SYS][N_SYS];
 	data_t B[N_SYS][M_SYS];
 
@@ -58,23 +58,22 @@ int main(int argc, char *argv[]){
 
     // get number parameters from .bin file
 	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint8_t));
-	sN_HOR = aux;
-	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint8_t));
 	sN_SYS = aux;
 	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint8_t));
 	sM_SYS = aux;
 	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint8_t));
 	sP_SYS = aux;
-	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint64_t));
-	sN = aux;
-	aux = 0;
 	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint8_t));
 	sN_QP = aux;
 	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint8_t));
 	sM_QP = aux;
+	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint8_t));
+	sN_HOR = aux;
 	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint16_t));
 	sIter = aux;
-	aux = 0;
+	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint16_t));
+	sN = aux;
+	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint16_t));
 
     // check if sN_HOR, sN_QP and sM_QP from .bin file match with N_HOR, N_QP and M_QP from system.hpp
     if (sN_HOR != N_HOR){
@@ -96,42 +95,6 @@ int main(int argc, char *argv[]){
     // number of samples to read
 	nSamplestb = (nSamplestb>sN)? sN : nSamplestb;
 
-    for (int r=0; r<N_SYS; r++){	// load xmin
-    	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-    	xmin[r] = (data_t)aux2;
-    }
-    for (int r=0; r<N_SYS; r++){	// load xmax
-    	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-    	xmax[r] = (data_t)aux2;
-    }
-    for (int r=0; r<M_SYS; r++){	// load umin
-    	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-    	umin[r] = (data_t)aux2;
-    }
-    for (int r=0; r<M_SYS; r++){	// load umax
-    	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-    	umax[r] = (data_t)aux2;
-    }
-    for (int r=0; r<sN_QP; r++){	// load H_qp
-    	for (int c=0; c<sN_QP; c++){
-        	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-    		//Q[r][c] = (data_t)aux2;
-    	}
-    }
-    for (int r=0; r<sN_QP; r++){	// load h_qp
-    	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-    	//q[r] = (data_t)aux2;
-    }
-	for (int r=0; r<sM_QP; r++){	// load C_qp
-		for (int c=0; c<sN_QP; c++){
-	    	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-			//H[r][c] = (data_t)aux2;
-		}
-    }
-    for (int r=0; r<(2*sN_QP); r++){	// load g
-    	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-    	//g[r] = (data_t)aux2;
-    }
 	for (int r=0; r<N_SYS; r++){	// load A - Ignored in this testbench
 		for (int c=0; c<N_SYS; c++){
 	    	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
@@ -145,25 +108,8 @@ int main(int argc, char *argv[]){
 		}
     }
 
-	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-	//rho = (data_t)aux2;
-
-    for (int r=0; r<sN_QP; r++){	// load R_inv
-    	for (int c=0; c<sN_QP; c++){
-        	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-        	//R_inv[r][c] = (data_t)aux2;
-    	}
-    }
-
-    for (int r=0; r<sN_QP; r++){	// load RhoMt_neg
-    	for (int c=0; c<sM_QP; c++){
-        	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-        	//RhoHt_neg[r][c] = (data_t)aux2;
-    	}
-    }
-
     data_t x[nSamplestb][N_SYS];
-    data_t r[nSamplestb][P_SYS];
+//    data_t r[nSamplestb][P_SYS];
     data_t ref_u[nSamplestb][M_SYS];
 
     for (int sample=0; sample<nSamplestb; sample++){	// for each sample
@@ -185,10 +131,10 @@ int main(int argc, char *argv[]){
     ///////////////// Data from golden reference is ready ///////////////////
 
     data_t x0[N_SYS];
-    data_t r0[P_SYS] = {0};
+//    data_t r0[P_SYS] = {0};
     data_t ref_u0[M_SYS];
     data_t u0[M_SYS] = {0};
-    data_t x1[N_SYS] = {0};
+//    data_t x1[N_SYS] = {0};
 
 	data_t max_error = 0;
 	data_t per_error;
@@ -204,7 +150,7 @@ int main(int argc, char *argv[]){
         for (int i=0; i<M_SYS; i++){		// load ref u0
             ref_u0[i] = ref_u[sample][i];
         }
-        mpc(x0, u0);
+        mpc(x0, u0, 10);
 
 #ifdef DISPLAY
     	cout << "sample number : " << sample << endl;

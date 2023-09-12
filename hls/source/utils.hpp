@@ -35,9 +35,9 @@ void mvmult(T (&A)[N][M], T (&B)[M], T (&R)[N]){
 */
 template<int N, int M, typename T>
 void vmmult(T (&A)[N], T (&B)[N][M], T (&R)[M]){
-	mvmult_column: for(int j = 0; j < M; ++j){
+	vmmult_column: for(int j = 0; j < M; ++j){
 		R[j] = 0;
-		mvmult_row: for(int i = 0; i < N; ++i){
+		vmvmult_row: for(int i = 0; i < N; ++i){
 			R[j] += A[i] * B[i][j];
 		}
 	}
