@@ -9,7 +9,7 @@
 #define M_SYS 1		// control inputs
 #define P_SYS 1		// system outputs
 
-#define N_HOR	4//16		// prediction horizon
+#define N_HOR	HOR_SIZE//4//16		// prediction horizon
 #define DENSE//SPARSE//
 typedef float data_t;
 

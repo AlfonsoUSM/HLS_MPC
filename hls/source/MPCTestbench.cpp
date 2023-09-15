@@ -24,7 +24,7 @@ int main(int argc, char *argv[]){
     cout << N_HOR << endl;
     // number of samples to read from samples file
     // large numbers can make the test bench really slow
-    int nSamplestb = 3;//10000;
+    int nSamplestb = 100;//10000;
 
 //	if (argc!=2){
 //	        cerr << "Must specify .bin\n";

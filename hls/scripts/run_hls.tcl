@@ -10,9 +10,9 @@
 
 set FORM "dense"
 # Vector list
-set N_HOR_LIST [list 4] 
-# 4 8 16 32 64]
-set UFACTOR_LIST [list 1]
+set N_HOR_LIST [list 6 8] 
+# 2 3 4 4 5 6 7 8]
+set UFACTOR_LIST [list 1 2 4 8 16 32]
 
 set GIT_ROOT "C:/Users/Alfonso/Documents/GitHub/HLS_MPC"
 set PRJ_ROOT "C:/dDesign/tesis/HLS/mpc"
@@ -27,8 +27,11 @@ file copy -force "${GIT_ROOT}/hls/source/system.hpp" "${PRJ_ROOT}/source/system.
 file copy -force "${GIT_ROOT}/hls/source/MPCTestbench.cpp" "${PRJ_ROOT}/source/testbench.cpp"
 
 foreach N_HOR $N_HOR_LIST {
-
-    puts "\n\n\nCreating N_HOR = ${N_HOR} project \n\n\n"
+    puts "\n////////////////////////////////"
+	puts "\n//                            //"
+	puts "\n// Creating N_HOR = ${N_HOR} project //"
+	puts "\n//                            //"
+	puts "\n////////////////////////////////\n"
 	set PROBLEM "${FORM}_H${N_HOR}"
 	# Create project.  -reset option allows to overwrite if the project exist
     open_project -reset mpc
@@ -36,25 +39,31 @@ foreach N_HOR $N_HOR_LIST {
     set_top mpc
 	
     # Add sources, for the horizon
-	add_files "${PRJ_ROOT}/source/system.hpp" -cflags "-DHOR_SIZE=${N_HOR}" -csimflags "-DHOR_SIZE=${N_HOR}"
-    add_files "${PRJ_ROOT}/source/mpc.cpp ${PRJ_ROOT}/source/mpc.hpp ${PRJ_ROOT}/source/utils.hpp" 
 	file copy -force "${GIT_ROOT}/matlab/samples/MPC_motor_${FORM}_N${N_HOR}.cpp" "${PRJ_ROOT}/source/system.cpp"
-	file copy -force "${GIT_ROOT}/matlab/samples/MPC_motor_${FORM}_N${N_HOR}.bin" "${PRJ_ROOT}/source/samples.bin"
-    add_files "${PRJ_ROOT}/source/system.cpp"
+    add_files "${PRJ_ROOT}/source/system.cpp" -cflags "-DHOR_SIZE=${N_HOR}" -csimflags "-DHOR_SIZE=${N_HOR}"
+	add_files "${PRJ_ROOT}/source/system.hpp" -cflags "-DHOR_SIZE=${N_HOR}" -csimflags "-DHOR_SIZE=${N_HOR}"
+	add_files "${PRJ_ROOT}/source/mpc.cpp" -cflags "-DHOR_SIZE=${N_HOR}" -csimflags "-DHOR_SIZE=${N_HOR}"
+	add_files "${PRJ_ROOT}/source/mpc.hpp" -cflags "-DHOR_SIZE=${N_HOR}" -csimflags "-DHOR_SIZE=${N_HOR}"
+	add_files "${PRJ_ROOT}/source/utils.hpp" -cflags "-DHOR_SIZE=${N_HOR}" -csimflags "-DHOR_SIZE=${N_HOR}"
 	# Testbench source and Golden reference file. Note the -tb option
+	file copy -force "${GIT_ROOT}/matlab/samples/MPC_motor_${FORM}_N${N_HOR}.bin" "${PRJ_ROOT}/source/samples.bin"
     add_files -tb "${PRJ_ROOT}/source/testbench.cpp" -cflags "-Wno-unknown-pragmas" -csimflags "-Wno-unknown-pragmas"
     add_files -tb "${PRJ_ROOT}/source/samples.bin" -cflags " -Wno-unknown-pragmas" -csimflags "-Wno-unknown-pragmas"
 	
 	foreach UFACTOR $UFACTOR_LIST {
+		puts "\n--------------------------------\n"
+		puts "\n   Solution Unroll_Factor = ${UFACTOR}   \n"
+		puts "\n--------------------------------\n"
 		set SOLUTION "op_UN${UFACTOR}"
 		# Set solution and flow target
 		open_solution "${SOLUTION}" -flow_target vivado
 		# Config solution with part for ZCU104 and 10ns target clock
 		set_part {xczu7ev-ffvc1156-2-e}
 		create_clock -period 10 -name default
+		config_compile -unsafe_math_optimizations=true
 		# Run C simulation
-		#csim_design -clean
-		#file copy -force "${PRJ_ROOT}/${SOLUTION}/csim/report/mpc_csim.log" "${GIT_ROOT}/hls/results/${PROBLEM}_${SOLUTION}_csim.log"
+#		csim_design -clean
+#		file copy -force "${PRJ_ROOT}/${SOLUTION}/csim/report/mpc_csim.log" "${GIT_ROOT}/hls/results/${PROBLEM}_${SOLUTION}_csim.log"
 		
 		# Set pragmas with directives
 		set_directive_array_partition -type complete -dim 2 "mvmult" A
