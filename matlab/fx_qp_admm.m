@@ -5,7 +5,7 @@
 % Based on the work by Juan David Escárate
 % ===============================================================================
 
-function [tk, zk, uk] = fx_qp_admm(H, h, M, c, init_tk, init_zk, init_uk, opt_rho, opt_iters)          
+function [tk, zk, uk] = fx_qp_admm(Q, q, H, h, init_tk, init_zk, init_uk, rho, iters)          
 %     global QP_vars counter
     % ------ QP PROBLEM ------ %
     % Min: 0.5*tk'*H*tk + h'*tk
@@ -32,30 +32,17 @@ function [tk, zk, uk] = fx_qp_admm(H, h, M, c, init_tk, init_zk, init_uk, opt_rh
     % iters -> Maximum iterations
     
     % ------ CHECK NUMBER OF INPUT ARGUMENTS ------ %
-    if nargin < 4 || nargin > 9
+    if nargin < 9 || nargin > 9
         errorStruct.message = 'Incorrect number of inputs';
         errorStruct.identifier = 'ADMM_QP:incorrectInputs';
         error(errorStruct);
     end
-    
-    % Fill in unset optional values.
-    %test_rho(A,Q);
-    rho = dhang_rho(M,H);
-%     QP_vars.rho(counter) = rho;
-    iters = 50;
-    switch nargin
-        case 8
-            rho = opt_rho;
-        case 9
-            rho = opt_rho;
-            iters = opt_iters;
-    end
-    
+
     % ------ DATA INITIALIZATION ------ %
     % Length of variables
-    n = size(h,1);
+    n = size(q,1);
     % Quantity of restrictions
-    n_c = size(c,1);
+    n_c = size(h,1);
     % Data initialization
     if nargin > 4
         tk = init_tk;
@@ -86,56 +73,17 @@ function [tk, zk, uk] = fx_qp_admm(H, h, M, c, init_tk, init_zk, init_uk, opt_rh
         % In this case Z = [0, inf) so
         % Projection_Z(z) = max{z,0}
         
-    R = H + rho*(M'*M);
+    R = Q + rho*(H'*H);
     R_inv = R \ eye(size(R,1));
-%     if(counter == 1)
-%         QP_vars.R_inv = R_inv;
-%     end
     % Iterations
     for k = 1:iters
-        v_x = zk - c + uk;
-        tk = R_inv * (-rho*M'*v_x - h);    % update x
+        v_x = zk - h + uk;
+        tk = R_inv * (-rho*H'*v_x - q);    % update x
            
-        zk = max(0, -M*tk - uk + c);             % update z
+        zk = max(0, -H*tk - uk + h);             % update z
 
         % Then we update the scaled dual variable
-        uk = uk + (M*tk + zk - c);                % update u
+        uk = uk + (H*tk + zk - h);                % update u
     end
 
-end
-
-function rho = dhang_rho(M,H)
-    % ------ QP PROBLEM ------ %
-    % Min: 1/2*x'*H*x + q'*x + g(z)
-    % ST:  Mx + z = c
-    %      z >= 0
-    % g(z) is the indicator function of Z:
-        % g(z) = 0 if z in Z,
-        % g(z) = ∞ if any component of z not in Z
-
-    % Define the singular decomposition of M as
-    % M = U*S*V'
-    % where U and V are orthonormal and S is diagonal with positive
-    % real matrix entries
-    [~,S,V] = svds(M);
-    % Set Sd = (S'*S)^(-1/2)
-    Sd = (S'*S)^(-1/2);
-    % Calculate Pd as 
-    % Pd = Sd'*V'*Q*V*Sd
-    Pd = Sd'*V'*H*V*Sd;
-    % Calculate non-zero eigenvalues
-    lambda_Pd  = eig(Pd);
-    lambda_max = max(lambda_Pd); 
-    beta_1     = 1/lambda_Pd(1);
-    beta_2     = 1/lambda_max;
-    % Solve eq 36 from Dang paper (Embedded ADMM-based 
-    % QP Solver for MPC with polytopic constraints)
-    % a4*rho^4 + a3*rho^3 + a2*rho^2 + a1*rho + a0
-    a4 =  beta_1*beta_2*(beta_1^2 + beta_2^2);
-    a3 = -(beta_1^3 + beta_2^3 - 3*beta_1*beta_2*(beta_1 + beta_2));
-    a2 = -(beta_1 - beta_2)^2;
-    a1 = -2*(beta_1 + beta_2);
-    a0 = -2;
-    eq_roots = roots([a4, a3, a2, a1, a0]);
-    rho = abs(eq_roots(1));
 end

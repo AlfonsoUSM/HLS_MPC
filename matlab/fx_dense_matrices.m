@@ -9,13 +9,15 @@
 %            AB          B
 %            .           .        .
 %            A^(N-1)B    A^(N-2)B . . . B]       
-function [Acal,Ocal] = AOcal(A,B,N)
-    Acal=[]; Ocal=[];  
+function [D,E] = fx_dense_matrices(A,B,N)
+    D=[]; E=[];  
     for i=1:1:N
         AB=[];
-        Acal=[Acal;A^i];
-        for j=1:1:i; AB=[AB,A^(i-j)*B]; end
+        D=[D;A^i];
+        for j=1:1:i 
+            AB=[AB,A^(i-j)*B]; 
+        end
         Fl=[AB,zeros(size(AB,1),N-i)];
-        Ocal=[Ocal;Fl];
+        E=[E;Fl];
     end
 end

@@ -1,15 +1,15 @@
-function writeMPCSamples(n, matDir, plant, data_t)
+function writeMPCSamples(n, matDir, plant, form, data_t)
 
-    binfile = "samples/MPC_"+plant+"_N"+n+"_"+data_t+".bin";
+    binfile = "samples/MPC_"+plant+"_"+form+"_N"+n+"_"+data_t+".bin";
 %     txtfile = "samples/samplesMPC_N"+n+".txt";
 
     disp('Guardando: '+ binfile);
     load(matDir);
 
     nSamples = size(uk,2);
-    H_qp = full(H);
-    C_qp = full(M_hat);
-    RMN = full(RhoMt_neg);
+%     H_qp = full(H);
+%     C_qp = full(M_hat);
+%     RMN = full(RhoMt_neg);
 
     binfileID = fopen(binfile,'w');
 
@@ -58,15 +58,15 @@ function writeMPCSamples(n, matDir, plant, data_t)
     fwrite(binfileID,reshape(xmax',1,[]),data_t);
     fwrite(binfileID,reshape(umin',1,[]),data_t);
     fwrite(binfileID,reshape(umax',1,[]),data_t);
-    fwrite(binfileID,reshape(H_qp',1,[]),data_t);
-    fwrite(binfileID,reshape(h',1,[]),data_t);
-    fwrite(binfileID,reshape(C_qp',1,[]),data_t);
+    fwrite(binfileID,reshape(Q',1,[]),data_t);
+    fwrite(binfileID,reshape(q',1,[]),data_t);
+    fwrite(binfileID,reshape(H',1,[]),data_t);
     fwrite(binfileID,reshape(g',1,[]),data_t);
     fwrite(binfileID,reshape(A',1,[]),data_t);
     fwrite(binfileID,reshape(B',1,[]),data_t);
-    fwrite(binfileID,Rho,data_t);
+    fwrite(binfileID,rho,data_t);
     fwrite(binfileID,reshape(R_inv',1,[]),data_t);
-    fwrite(binfileID,reshape(RMN',1,[]),data_t);
+    fwrite(binfileID,reshape(RhoHt_neg',1,[]),data_t);
      
     for sample = 1:nSamples
 %         fwrite(fileID,reshape(c_hat(:,sample)',1,[]),'double');
