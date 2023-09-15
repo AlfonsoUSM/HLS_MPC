@@ -44,7 +44,6 @@ Omega = C'*C;
 % r = square(2*pi*f*t);
 
 ADMM_iters = 10;
-rho = single(14.464335);% single(62.963413);
 
 %% Spares Formulation
 
@@ -76,6 +75,8 @@ f = zeros(N_SYS*(N_HOR+1), 1, 'single');
 g = single([kron(ones(N_HOR,1),d);dN;kron(ones(N_HOR,1),e)]);                   % constante del sistema
 H = [G; F; -F];                                                                 % constante del sistema
 
+rho = single(fx_dhang_rho(Q,H));
+%rho = single(0.10070947);%single(62.963413);%
 
 %% MPC Iteration
 

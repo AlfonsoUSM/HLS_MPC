@@ -1,7 +1,7 @@
 %% MPC for DC-DC motor, dense formulation
 % ===============================================================================
 % Alfonso Cortes Neira - Universidad Técnica Federico Santa María
-% 06-09-2023
+% 15-09-2023
 % Based on the work by Andrew Morrison
 % https://github.com/morrisort/embeddedMPC/
 % ===============================================================================
@@ -43,7 +43,6 @@ Omega=C'*C;
 %r = square(2*pi*f*t);
 
 ADMM_iters = 10;
-rho = single(0.10070947);%single(62.963413);%
 
 %% Dense Formulation
 
@@ -63,7 +62,7 @@ theta = zeros(N_QP, length(k), 'single');
 K = blkdiag(kron(eye(N_HOR-1),Omega),OmegaN);
 L = kron(eye(N_HOR),Gamma); 
 Q = 2*(L+E'*K*E);                           % constante del sistema
-Q = single((Q+Q')/2);
+Q = (Q+Q')/2;
 D = single(D);
 F = [E;-E];
 G = single(2*D'*K*E);                       % constante del sistema
@@ -71,7 +70,13 @@ a = single(kron(ones(N_HOR,1),umin));       % constante del sistema
 b = single(kron(ones(N_HOR,1),umax));       % constante del sistema
 d = single(kron(ones(N_HOR,1),xmin));       % constante del sistema
 e = single(kron(ones(N_HOR,1),xmax));       % constante del sistema
-H = single([F;eye(N_QP);-eye(N_QP)]);       % constante del sistema
+H = [F;eye(N_QP);-eye(N_QP)];               % constante del sistema
+
+rho = single(fx_dhang_rho(Q,H));
+%rho = single(0.10070947);%single(62.963413);%
+
+Q = single(Q);
+H = single(H);
 
 %% MPC Iteration
 
@@ -105,8 +110,10 @@ grid on
 
 %% Generate C++ file with Global Variables (constants)
 
-txtfile = "samples/MPC_motor_dense_N"+N_HOR+".txt";
+txtfile = "samples/MPC_motor_dense_N"+N_HOR+".cpp";
 txtfileID = fopen(txtfile,'w');
+
+fprintf(txtfileID, "\n#include "+char(34)+"system.hpp"+char(34)+"\n\n// HOR = 5\n#if defined DENSE\n\n");
 
 fx_cpp_print_matrix(txtfileID, H, "data_t H[M_QP][N_QP]", M_QP, N_QP)
 fx_cpp_print_matrix(txtfileID, -a, "data_t a_neg[N_QP]", N_QP)
@@ -119,7 +126,10 @@ fx_cpp_print_matrix(txtfileID, G, "data_t G[N_SYS][N_QP]", N_SYS, N_QP)
 fx_cpp_print_matrix(txtfileID, R_inv, "data_t R_inv[N_QP][N_QP]", N_QP, N_QP)
 fx_cpp_print_matrix(txtfileID, W, "data_t W[N_QP][M_QP]", N_QP, M_QP)
 
+fprintf(txtfileID, "\n#else\n\n// SPARSE\n\n#endif");
+
 fclose(txtfileID);
+
 
 %% Generate .bin file with samples
 

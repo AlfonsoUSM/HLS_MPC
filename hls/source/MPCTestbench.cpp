@@ -8,7 +8,7 @@
 using namespace std;
 #define DISPLAY
 #ifdef DENSE
-char input_file_name[] = "MPC_motor_dense_N4.bin";
+char input_file_name[] = "samples.bin";//"MPC_motor_dense_N4.bin";
 #else
 char input_file_name[] = "MPC_motor_sparse_N4.bin";
 #endif
@@ -21,6 +21,7 @@ typedef float sample_data_t;
 
 int main(int argc, char *argv[]){
 
+    cout << N_HOR << endl;
     // number of samples to read from samples file
     // large numbers can make the test bench really slow
     int nSamplestb = 3;//10000;

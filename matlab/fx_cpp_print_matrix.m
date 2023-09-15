@@ -9,7 +9,7 @@ function fx_cpp_print_matrix(txtfileID, A, def_string, n, m)
         fprintf(txtfileID, "\n" + def_string +" =\t{{");
         for row = 1:(n-1)
             fprintf(txtfileID, '%.15e, ', A(row,1:(m-1)));
-            fprintf(txtfileID, '%.15e},\n\t\t\t {', A(row,m));
+            fprintf(txtfileID, '%.15e},\n\t\t\t\t\t {', A(row,m));
         end
         fprintf(txtfileID, '%.15e, ', A(n,1:(m-1)));
         fprintf(txtfileID, '%.15e}};\n\n', A(n,m));

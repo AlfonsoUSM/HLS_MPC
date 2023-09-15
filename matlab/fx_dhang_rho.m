@@ -1,23 +1,23 @@
 
-function rho = fx_dhang_rho(M,H)
+function rho = fx_dhang_rho(Q,H)
     % ------ QP PROBLEM ------ %
-    % Min: 1/2*x'*H*x + q'*x + g(z)
-    % ST:  Mx + z = c
+    % Min: 1/2*x'*Q*x + q'*x + g(z)
+    % ST:  Hx + z = h
     %      z >= 0
     % g(z) is the indicator function of Z:
         % g(z) = 0 if z in Z,
         % g(z) = ∞ if any component of z not in Z
 
-    % Define the singular decomposition of M as
-    % M = U*S*V'
+    % Define the singular decomposition of H as
+    % H = U*S*V'
     % where U and V are orthonormal and S is diagonal with positive
     % real matrix entries
-    [~,S,V] = svds(M);
+    [~,S,V] = svds(H);
     % Set Sd = (S'*S)^(-1/2)
     Sd = (S'*S)^(-1/2);
     % Calculate Pd as 
     % Pd = Sd'*V'*Q*V*Sd
-    Pd = Sd'*V'*H*V*Sd;
+    Pd = Sd'*V'*Q*V*Sd;
     % Calculate non-zero eigenvalues
     lambda_Pd  = eig(Pd);
     lambda_max = max(lambda_Pd); 

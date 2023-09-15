@@ -24,6 +24,7 @@ file copy -force "${GIT_ROOT}/hls/source/mpc.cpp" "${PRJ_ROOT}/source/mpc.cpp"
 file copy -force "${GIT_ROOT}/hls/source/mpc.hpp" "${PRJ_ROOT}/source/mpc.hpp"
 file copy -force "${GIT_ROOT}/hls/source/utils.hpp" "${PRJ_ROOT}/source/utils.hpp"
 file copy -force "${GIT_ROOT}/hls/source/system.hpp" "${PRJ_ROOT}/source/system.hpp"
+file copy -force "${GIT_ROOT}/hls/source/MPCTestbench.cpp" "${PRJ_ROOT}/source/testbench.cpp"
 
 foreach N_HOR $N_HOR_LIST {
 
@@ -34,28 +35,46 @@ foreach N_HOR $N_HOR_LIST {
     # Set HLS top function
     set_top mpc
 	
-	# Modify N_HOR define and sample
-	
-    # Add config file to sources
-    add_files "${PRJ_ROOT}/source/mpc.cpp ${PRJ_ROOT}/source/mpc.hpp ${PRJ_ROOT}/source/utils.hpp ${PRJ_ROOT}/source/system.hpp" 
+    # Add sources, for the horizon
+	add_files "${PRJ_ROOT}/source/system.hpp" -cflags "-DHOR_SIZE=${N_HOR}" -csimflags "-DHOR_SIZE=${N_HOR}"
+    add_files "${PRJ_ROOT}/source/mpc.cpp ${PRJ_ROOT}/source/mpc.hpp ${PRJ_ROOT}/source/utils.hpp" 
 	file copy -force "${GIT_ROOT}/matlab/samples/MPC_motor_${FORM}_N${N_HOR}.cpp" "${PRJ_ROOT}/source/system.cpp"
+	file copy -force "${GIT_ROOT}/matlab/samples/MPC_motor_${FORM}_N${N_HOR}.bin" "${PRJ_ROOT}/source/samples.bin"
     add_files "${PRJ_ROOT}/source/system.cpp"
-	# Testbench source. Note the -tb option
-    add_files -tb "${GIT_ROOT}/hls/source/MPCTestbench.cpp" -cflags "-Wno-unknown-pragmas" -csimflags "-Wno-unknown-pragmas"
-    # Golden reference file
-    add_files -tb "${GIT_ROOT}/matlab/samples/MPC_motor_${FORM}_N${N_HOR}.bin" -cflags " -Wno-unknown-pragmas" -csimflags "-Wno-unknown-pragmas"
+	# Testbench source and Golden reference file. Note the -tb option
+    add_files -tb "${PRJ_ROOT}/source/testbench.cpp" -cflags "-Wno-unknown-pragmas" -csimflags "-Wno-unknown-pragmas"
+    add_files -tb "${PRJ_ROOT}/source/samples.bin" -cflags " -Wno-unknown-pragmas" -csimflags "-Wno-unknown-pragmas"
 	
 	foreach UFACTOR $UFACTOR_LIST {
 		set SOLUTION "op_UN${UFACTOR}"
 		# Set solution and flow target
 		open_solution "${SOLUTION}" -flow_target vivado
+		# Config solution with part for ZCU104 and 10ns target clock
+		set_part {xczu7ev-ffvc1156-2-e}
+		create_clock -period 10 -name default
 		# Run C simulation
 		#csim_design -clean
 		#file copy -force "${PRJ_ROOT}/${SOLUTION}/csim/report/mpc_csim.log" "${GIT_ROOT}/hls/results/${PROBLEM}_${SOLUTION}_csim.log"
 		
-		# Config solution with part for ZCU104 and 10ns target clock
-		set_part {xczu7ev-ffvc1156-2-e}
-		create_clock -period 10 -name default
+		# Set pragmas with directives
+		set_directive_array_partition -type complete -dim 2 "mvmult" A
+		set_directive_array_partition -type complete -dim 1 "mvmult" B
+		set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "vadd" A
+		set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "vadd" B
+		set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "vadd" R
+		set_directive_unroll -factor ${UFACTOR} "vadd/vadd_row"
+		set_directive_pipeline -II 1 "vadd/vadd_row"
+		set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "vsub" A
+		set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "vsub" B
+		set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "vsub" R
+		set_directive_unroll -factor ${UFACTOR} "vsub/vsub_row"
+		set_directive_pipeline -II 1 "vsub/vsub_row"
+		set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "max0" R
+		set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "max0" A
+		set_directive_unroll -factor ${UFACTOR} "max0/max0_row"
+		set_directive_pipeline -II 1 "max0/max0_row"
+
+		
 		# Run synthesis
 		csynth_design
 		file copy -force "${PRJ_ROOT}/${SOLUTION}/syn/report/csynth.rpt" "${GIT_ROOT}/hls/results/${PROBLEM}_${SOLUTION}_csynth.txt"
