@@ -1,4 +1,5 @@
 # High Level Synhesis, change prediction horizon
+# unroll of elemeto-to-element operations (add, sub, max)
 # ===============================================================================
 # Alfonso Cortes Neira - Universidad Técnica Federico Santa María
 # 12-09-2023

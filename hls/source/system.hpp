@@ -2,8 +2,6 @@
 #define SYSTEM_H
 
 
-#define N_IT	10		// number of iterations of QP solver
-
 ////////// System //////////
 #define N_SYS 2		// system states
 #define M_SYS 1		// control inputs
