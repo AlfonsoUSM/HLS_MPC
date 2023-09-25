@@ -11,8 +11,8 @@
 
 set FORM "dense"
 # Lists of solution pairs
-set N_HOR_LIST [list 3 4 5 5 6 6 7 7 8 8] 
-set UFACTOR_LIST [list 18 24 30 64 36 64 42 64 48 64]
+set N_HOR_LIST [list 3] 
+set UFACTOR_LIST [list 16]
 
 set GIT_ROOT "C:/Users/Alfonso/Documents/GitHub/HLS_MPC"
 set PRJ_ROOT "C:/dDesign/tesis/HLS/mpc"
@@ -53,7 +53,7 @@ foreach N_HOR $N_HOR_LIST UFACTOR $UFACTOR_LIST {
 	puts "\n--------------------------------\n"
 	puts "\n   Solution Unroll_Factor = ${UFACTOR}   \n"
 	puts "\n--------------------------------\n"
-	set SOLUTION "op_UN${UFACTOR}"
+	set SOLUTION "op2_UN${UFACTOR}"
 	# Set solution and flow target
 	open_solution "${SOLUTION}" -flow_target vivado
 	# Config solution with part for ZCU104 and 10ns target clock
@@ -67,6 +67,7 @@ foreach N_HOR $N_HOR_LIST UFACTOR $UFACTOR_LIST {
 	# Set pragmas with directives
 	set_directive_array_partition -type complete -dim 2 "mvmult" A
 	set_directive_array_partition -type complete -dim 1 "mvmult" B
+	set_directive_pipeline -II 1 "mvmult/mvmult_row"
 	set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "vadd" A
 	set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "vadd" B
 	set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "vadd" R

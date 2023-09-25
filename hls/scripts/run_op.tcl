@@ -11,9 +11,9 @@
 
 set FORM "dense"
 # Vector list
-set N_HOR_LIST [list 5 6 7 8] 
+set N_HOR_LIST [list 8] 
 # 2 3 4 5 6 7 8]
-set UFACTOR_LIST [list 24 48]
+set UFACTOR_LIST [list 1]
 
 set GIT_ROOT "C:/Users/Alfonso/Documents/GitHub/HLS_MPC"
 set PRJ_ROOT "C:/dDesign/tesis/HLS/mpc"
@@ -55,7 +55,7 @@ foreach N_HOR $N_HOR_LIST {
 		puts "\n--------------------------------\n"
 		puts "\n   Solution Unroll_Factor = ${UFACTOR}   \n"
 		puts "\n--------------------------------\n"
-		set SOLUTION "op_UN${UFACTOR}"
+		set SOLUTION "op2_UN${UFACTOR}"
 		# Set solution and flow target
 		open_solution "${SOLUTION}" -flow_target vivado
 		# Config solution with part for ZCU104 and 10ns target clock
@@ -69,6 +69,7 @@ foreach N_HOR $N_HOR_LIST {
 		# Set pragmas with directives
 		set_directive_array_partition -type complete -dim 2 "mvmult" A
 		set_directive_array_partition -type complete -dim 1 "mvmult" B
+		set_directive_pipeline -II 1 "mvmult/mvmult_row"
 		set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "vadd" A
 		set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "vadd" B
 		set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "vadd" R
@@ -95,10 +96,10 @@ foreach N_HOR $N_HOR_LIST {
 		file copy -force "${PRJ_ROOT}/${SOLUTION}/sim/report/mpc_cosim.rpt" "${GIT_ROOT}/hls/results/${PROBLEM}_${SOLUTION}_sim.txt"
 	
 		# Set export settings. -version allows to avoid the Vitis HLS date error in export.
-		config_export -display_name mpc -format ip_catalog -output "${GIT_ROOT}/hls/ips/${PROBLEM}_${SOLUTION}.zip" -rtl verilog -version 1.0
+#		config_export -display_name mpc -format ip_catalog -output "${GIT_ROOT}/hls/ips/${PROBLEM}_${SOLUTION}.zip" -rtl verilog -version 1.0
 		# Run export + logic synthesis + implementation
-		export_design -flow impl -rtl verilog -format ip_catalog -output "${GIT_ROOT}/hls/ips/${PROBLEM}_${SOLUTION}.zip"
-		file copy -force "${PRJ_ROOT}/${SOLUTION}/impl/report/verilog/export_impl.rpt" "${GIT_ROOT}/hls/results/${PROBLEM}_${SOLUTION}_impl.txt"
+#		export_design -flow impl -rtl verilog -format ip_catalog -output "${GIT_ROOT}/hls/ips/${PROBLEM}_${SOLUTION}.zip"
+#		file copy -force "${PRJ_ROOT}/${SOLUTION}/impl/report/verilog/export_impl.rpt" "${GIT_ROOT}/hls/results/${PROBLEM}_${SOLUTION}_impl.txt"
 		
 		# Move solution reports		
 		file copy -force "${PRJ_ROOT}/${SOLUTION}/${SOLUTION}.log" "${GIT_ROOT}/hls/results/${PROBLEM}_${SOLUTION}.log"

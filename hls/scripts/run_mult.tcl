@@ -13,7 +13,7 @@ set FORM "dense"
 # Vector list
 set N_HOR_LIST [list 8] 
 # 2 3 4 4 5 6 7 8]
-set UFACTOR_LIST [list 4 8 16 32]
+set UFACTOR_LIST [list 64]
 
 set GIT_ROOT "C:/Users/Alfonso/Documents/GitHub/HLS_MPC"
 set PRJ_ROOT "C:/dDesign/tesis/HLS/mpc"
@@ -55,7 +55,7 @@ foreach N_HOR $N_HOR_LIST {
 		puts "\n--------------------------------\n"
 		puts "\n   Solution Unroll_Factor = ${UFACTOR}   \n"
 		puts "\n--------------------------------\n"
-		set SOLUTION "mult_UN${UFACTOR}"
+		set SOLUTION "mult2_UN${UFACTOR}"
 		# Set solution and flow target
 		open_solution "${SOLUTION}" -flow_target vivado
 		# Config solution with part for ZCU104 and 10ns target clock
@@ -73,7 +73,10 @@ foreach N_HOR $N_HOR_LIST {
 		set_directive_array_partition -dim 1 -factor ${UFACTOR} -type cyclic "mvmult" R
 		set_directive_unroll -factor ${UFACTOR} "mvmult/mvmult_row"
 		set_directive_pipeline -II 1 "mvmult/mvmult_row"
-
+		set_directive_pipeline -II 1 "vadd/vadd_row"
+		set_directive_pipeline -II 1 "vsub/vsub_row"
+		set_directive_pipeline -II 1 "max0/max0_row"
+		
 		
 		# Run synthesis
 		csynth_design
@@ -82,6 +85,7 @@ foreach N_HOR $N_HOR_LIST {
 		# Run cosimulation
 		cosim_design
 		file copy -force "${PRJ_ROOT}/${SOLUTION}/sim/report/verilog/mpc.log" "${GIT_ROOT}/hls/results/${PROBLEM}_${SOLUTION}_sim.log"
+		file copy -force "${PRJ_ROOT}/${SOLUTION}/sim/report/mpc_cosim.rpt" "${GIT_ROOT}/hls/results/${PROBLEM}_${SOLUTION}_sim.txt"
 	
 		# Set export settings. -version allows to avoid the Vitis HLS date error in export.
 		config_export -display_name mpc -format ip_catalog -output "${GIT_ROOT}/hls/ips/${PROBLEM}_${SOLUTION}.zip" -rtl verilog -version 1.0
