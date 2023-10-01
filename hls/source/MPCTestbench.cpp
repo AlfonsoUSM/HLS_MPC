@@ -64,17 +64,17 @@ int main(int argc, char *argv[]){
 	sM_SYS = aux;
 	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint8_t));
 	sP_SYS = aux;
-	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint8_t));
+    samples.read(reinterpret_cast<char*>(&aux), sizeof(uint8_t));
+    sN_HOR = aux;
+	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint16_t));
 	sN_QP = aux;
-	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint8_t));
+	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint16_t));
 	sM_QP = aux;
-	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint8_t));
-	sN_HOR = aux;
 	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint16_t));
 	sIter = aux;
 	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint16_t));
 	sN = aux;
-	samples.read(reinterpret_cast<char*>(&aux), sizeof(uint16_t));
+    aux = 0;
 
     // check if sN_HOR, sN_QP and sM_QP from .bin file match with N_HOR, N_QP and M_QP from system.hpp
     if (sN_HOR != N_HOR){
