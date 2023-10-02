@@ -144,12 +144,11 @@ B = single(B);
 fwrite(binfileID, N_SYS,'uint8');
 fwrite(binfileID, M_SYS,'uint8');
 fwrite(binfileID, P_SYS,'uint8');
-fwrite(binfileID, N_QP,'uint8');
-fwrite(binfileID, M_QP,'uint8');
 fwrite(binfileID, N_HOR,'uint8');
+fwrite(binfileID, N_QP,'uint16');
+fwrite(binfileID, M_QP,'uint16');
 fwrite(binfileID, ADMM_iters,'uint16');
-fwrite(binfileID, nSamples,'uint16');  
-fwrite(binfileID, 0,'uint16');
+fwrite(binfileID, nSamples,'uint16'); 
 
 % fwrite(binfileID,reshape(xmin',1,[]),data_t);
 % fwrite(binfileID,reshape(xmax',1,[]),data_t);

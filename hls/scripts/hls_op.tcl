@@ -11,8 +11,9 @@
 
 set FORM "dense"
 # Lists of solution pairs
-set N_HOR_LIST [list 3] 
-set UFACTOR_LIST [list 16]
+set N_HOR_LIST [list 20 50 100 20 50 100 20 50 100]
+# 20 50 100 20 50 100] 
+set UFACTOR_LIST [list 64 64 64 32 32 32 128 128 128]
 
 set GIT_ROOT "C:/Users/Alfonso/Documents/GitHub/HLS_MPC"
 set PRJ_ROOT "C:/dDesign/tesis/HLS/mpc"
