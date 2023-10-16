@@ -17,7 +17,7 @@ function [D,E] = fx_dense_matrices(A,B,N)
         for j=1:1:i 
             AB=[AB,A^(i-j)*B]; 
         end
-        Fl=[AB,zeros(size(AB,1),N-i)];
+        Fl=[AB,zeros(size(AB,1),(N-i)*size(B,2))];
         E=[E;Fl];
     end
 end
