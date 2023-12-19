@@ -43,25 +43,25 @@ void mpc(data_t (&x0)[N_SYS], data_t (&u0)[M_SYS], int IT){
 void mpc_dense_constraint(data_t (&x0)[N_SYS], data_t (&q)[N_QP], data_t (&h)[M_QP]){
 	// follow reference currently not implemented
 	vmmult<N_SYS,N_QP,data_t>(x0, G, q);		// q = (x0'*G)';
-	data_t temp[N_SYS*N_HOR], f1[N_SYS*N_HOR], f2[N_SYS*N_HOR];
-	mvmult<(N_SYS*N_HOR),N_SYS,data_t>(D, x0, temp);
-	vsub<(N_SYS*N_HOR),data_t>(e, temp, f1);
-	vsub<(N_SYS*N_HOR),data_t>(temp, d, f2);	// f = [e-D*x0; D*x0-d];
+	data_t temp[5*N_HOR], f1[5*N_HOR], f2[5*N_HOR];
+	mvmult<(5*N_HOR),N_SYS,data_t>(D, x0, temp);
+	vsub<(5*N_HOR),data_t>(e, temp, f1);
+	vsub<(5*N_HOR),data_t>(temp, d, f2);	// f = [e-D*x0; D*x0-d];
     // h = [f; b; -a];
 	int i = 0;
-	constraint1: for (int j=0; j<(N_SYS*N_HOR); j++){
+	constraint1: for (int j=0; j<(5*N_HOR); j++){
 		h[i] = f1[j];
 		i++;
 	}
-	constraint2: for (int j=0; j<(N_SYS*N_HOR); j++){
+	constraint2: for (int j=0; j<(5*N_HOR); j++){
 		h[i] = f2[j];
 		i++;
 	}
-	constraint3: for (int j=0; j<N_QP; j++){
+	constraint3: for (int j=0; j<(5*N_HOR); j++){
 		h[i] = b[j];
 		i++;
 	}
-	constraint4: for (int j=0; j<N_QP; j++){
+	constraint4: for (int j=0; j<(5*N_HOR); j++){
 		h[i] = a_neg[j];
 		i++;
 	}
@@ -90,18 +90,21 @@ void qp_admm(data_t (&q)[N_QP], data_t (&h)[M_QP], int IT){
 #pragma HLS LOOP_TRIPCOUNT max=10
 			data_t vx[M_QP];
 			data_t temp[M_QP];
-			admm_merge1:{	// vx = zk - h + uk;
+			admm_merge1:{
+	// vx = zk - h + uk;
 				vsub<M_QP,data_t>(zk_admm, h, temp);
 				vadd<M_QP,data_t>(temp, uk_admm, vx);
 			}
 			data_t temp1[N_QP], temp2[N_QP], temp3[N_QP];
-			admm_merge2:{	// tk = R_inv * (-rho * H^T * vx - q);
+			admm_merge2:{
+	// tk = R_inv * (-rho * H^T * vx - q);
 				mvmult<N_QP,M_QP,data_t>(W, vx, temp1);
 				vsub<N_QP,data_t>(temp1, q, temp2);
 			}
 			mvmult<N_QP,N_QP,data_t>(R_inv, temp2, tk_admm);
 			data_t Htk[M_QP], temp4[M_QP], temp5[M_QP], temp6[M_QP], temp7[M_QP];
-			admm_merge:{	// zk = max{0, h - uk - H*tk};	uk = uk + (H*tk + zk - h);
+			admm_merge:{
+	// zk = max{0, h - uk - H*tk};	uk = uk + (H*tk + zk - h);
 				mvmult<M_QP,N_QP,data_t>(H, tk_admm, Htk);		// Htk = H*kt
 				vsub<M_QP,data_t>(h, uk_admm, temp4);			// temp4 = h - uk
 				vsub<M_QP,data_t>(temp4, Htk, temp5);			// temp5 = (h - uk) - Htk

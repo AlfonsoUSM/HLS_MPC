@@ -8,11 +8,11 @@
 using namespace std;
 #define DISPLAY
 #ifdef DENSE
-char input_file_name[] = "samples.bin";//"MPC_motor_dense_N4.bin";//
+char input_file_name[] = "MPC_der_dense_N2.bin";//"samples.bin";//
 #else
-char input_file_name[] = "MPC_motor_sparse_N4.bin";
+char input_file_name[] = "MPC_der_sparse_N4.bin";
 #endif
-char output_file_name[]= "MPC_motor_dense.csv";
+char output_file_name[]= "MPC_der_dense.csv";
 double threshold = 1e-0;
 // MatLab -> C++
 // single -> float

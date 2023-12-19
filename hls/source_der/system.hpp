@@ -3,24 +3,25 @@
 
 
 ////////// System //////////
-#define N_SYS 2		// system states
-#define M_SYS 1		// control inputs
+#define N_SYS 4		// system states
+#define M_SYS 2		// control inputs
 #define P_SYS 1		// system outputs
+#define C_SYS 20	// system constraints
 
-#define N_HOR	HOR_SIZE//4//16//		// prediction horizon
+#define N_HOR	2		// prediction horizon
 #define DENSE//SPARSE//
 typedef float data_t;
 
 ////////// MPC Formulation //////////
 
 #if defined DENSE		// Dense formulation
-#define N_QP M_SYS*N_HOR							// Number of optimization values
-#define M_QP (2 * N_HOR * (N_SYS + M_SYS))			// Number of optimization constraints
-extern data_t a_neg[N_QP];
-extern data_t b[N_QP];
-extern data_t d[N_SYS*N_HOR];
-extern data_t e[N_SYS*N_HOR];
-extern data_t D[N_SYS*N_HOR][N_SYS];
+#define N_QP M_SYS*N_HOR			// Number of optimization decision variables
+#define M_QP C_SYS * N_HOR			// Number of optimization constraints
+extern data_t a_neg[5*N_HOR];
+extern data_t b[5*N_HOR];
+extern data_t d[5*N_HOR];
+extern data_t e[5*N_HOR];
+extern data_t D[5*N_HOR][N_SYS];
 extern data_t G[N_SYS][N_QP];
 
 #elif defined SPARSE	// Sparse formulation

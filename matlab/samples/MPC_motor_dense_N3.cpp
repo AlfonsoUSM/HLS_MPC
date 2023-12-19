@@ -1,7 +1,7 @@
 
 #include "system.hpp"
 
-// HOR = 5
+// HOR = 3
 #if defined DENSE
 
 
