@@ -7,7 +7,7 @@
 #define M_SYS 1		// control inputs
 #define P_SYS 1		// system outputs
 
-#define N_HOR	HOR_SIZE//4//16//		// prediction horizon
+#define N_HOR	4//HOR_SIZE//16//		// prediction horizon
 #define DENSE//SPARSE//
 typedef float data_t;
 
@@ -22,6 +22,11 @@ extern data_t d[N_SYS*N_HOR];
 extern data_t e[N_SYS*N_HOR];
 extern data_t D[N_SYS*N_HOR][N_SYS];
 extern data_t G[N_SYS][N_QP];
+extern data_t S_inv[N_SYS+M_SYS][N_SYS+P_SYS];
+extern data_t xmin[N_SYS];
+extern data_t xmax[N_SYS];
+extern data_t umin[M_SYS];
+extern data_t umax[M_SYS];
 
 #elif defined SPARSE	// Sparse formulation
 #define N_QP (N_HOR * (N_SYS + M_SYS) + N_SYS)					// Number of optimization variables

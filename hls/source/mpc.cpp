@@ -11,16 +11,18 @@ data_t uk_admm[M_QP] = {0};
 
 // Function Definitions
 
-void mpc(data_t (&x0)[N_SYS], data_t (&u0)[M_SYS], int IT){
+void mpc(data_t (&x0)[N_SYS], data_t (&r0)[P_SYS], data_t (&u0)[M_SYS], int IT){
+//#pragma HLS INTERFACE mode=ap_ctrl_none port=return
 #pragma HLS INTERFACE mode=s_axilite port=return
 #pragma HLS INTERFACE mode=s_axilite port=x0
 #pragma HLS INTERFACE mode=s_axilite port=u0
 #pragma HLS INTERFACE mode=s_axilite port=IT
 	// constraint c_hat = constraint(x0, r0)
-#if defined DENSE
+#ifdef DENSE
 	data_t h[M_QP];
 	data_t q_hat[N_QP];
-	mpc_dense_constraint(x0, q_hat, h);
+	data_t inf[N_SYS+M_SYS];
+	mpc_dense_constraint(x0, r0, inf, q_hat, h);
 #else
 	data_t h[M_QP] = {0};
 	data_t (&q_hat)[N_QP] = q;
@@ -30,7 +32,7 @@ void mpc(data_t (&x0)[N_SYS], data_t (&u0)[M_SYS], int IT){
 	qp_admm(q_hat, h, IT);
 	for (int i=0; i<M_SYS ; i++){
 #ifdef DENSE
-		u0[i] = tk_admm[i];
+		u0[i] = tk_admm[i] + inf[N_SYS+i];
 #else
 		u0[i] = tk_admm[(N_HOR*N_SYS+N_SYS + i)];
 #endif
@@ -40,29 +42,64 @@ void mpc(data_t (&x0)[N_SYS], data_t (&u0)[M_SYS], int IT){
 }
 
 #if defined DENSE
-void mpc_dense_constraint(data_t (&x0)[N_SYS], data_t (&q)[N_QP], data_t (&h)[M_QP]){
-	// follow reference currently not implemented
-	vmmult<N_SYS,N_QP,data_t>(x0, G, q);		// q = (x0'*G)';
-	data_t temp[N_SYS*N_HOR], f1[N_SYS*N_HOR], f2[N_SYS*N_HOR];
-	mvmult<(N_SYS*N_HOR),N_SYS,data_t>(D, x0, temp);
-	vsub<(N_SYS*N_HOR),data_t>(e, temp, f1);
-	vsub<(N_SYS*N_HOR),data_t>(temp, d, f2);	// f = [e-D*x0; D*x0-d];
+void mpc_dense_constraint(data_t (&x0)[N_SYS], data_t (&r0)[P_SYS], data_t (&inf)[N_SYS+M_SYS], data_t (&q)[N_QP], data_t (&h)[M_QP]){
+	// follow reference
+	data_t ref[N_SYS+P_SYS];
+	ref1: for (int i=0; i<N_SYS; i++){
+		ref[i] = 0;
+	}
+	ref2: for (int i=0; i<P_SYS; i++){
+		ref[i+N_SYS] = r0[i];
+	}
+	mvmult<(N_SYS+M_SYS),(N_SYS+P_SYS),data_t>(S_inv, ref, inf);
+	data_t xnau[N_SYS];
+	data_t xnau_max[N_SYS];
+	data_t xnau_min[N_SYS];
+	data_t unau_max[M_SYS];
+	data_t unau_min[M_SYS];
+	xinf: for (int i=0; i<N_SYS; i++){		// inf = [xinf; uinf]
+		xnau[i] = x0[i] - inf[i];			// xnau = x - xinf
+		xnau_max[i] = xmax[i] - inf[i];
+		xnau_min[i] = xmin[i] - inf[i];
+	}
+	uinf: for (int i=0; i<M_SYS; i++){
+		unau_max[i] = umax[i] - inf[N_SYS+i];
+		unau_min[i] = umin[i] - inf[N_SYS+i];
+	}
+	// build vectors q and h
+	vmmult<N_SYS,N_QP,data_t>(xnau, G, q);		// q = (x0'*G)';
+	data_t dnau[N_SYS*N_HOR], enau[N_SYS*N_HOR], temp[N_SYS*N_HOR];
+	// f = [e-D*x0; D*x0-d];
+	mvmult<(N_SYS*N_HOR),N_SYS,data_t>(D, xnau, temp);
+	f1: for (int i=0; i<N_SYS; i++){
+		f2: for (int j=0; j<N_HOR; j++){
+			enau[j*N_SYS+i] = xnau_max[i];
+			dnau[j*N_SYS+i] = xnau_min[i];
+		}
+	}
+	data_t anau_neg[N_QP], bnau[N_QP];
+	ab1: for (int i=0; i<M_SYS; i++){
+			ab2: for (int j=0; j<N_HOR; j++){
+				bnau[j*M_SYS+i] = unau_max[i];
+				anau_neg[j*M_SYS+i] = -unau_min[i];
+			}
+		}
     // h = [f; b; -a];
 	int i = 0;
 	constraint1: for (int j=0; j<(N_SYS*N_HOR); j++){
-		h[i] = f1[j];
+		h[i] = enau[j] - temp[j];
 		i++;
 	}
 	constraint2: for (int j=0; j<(N_SYS*N_HOR); j++){
-		h[i] = f2[j];
+		h[i] = temp[j] - dnau[j];
 		i++;
 	}
 	constraint3: for (int j=0; j<N_QP; j++){
-		h[i] = b[j];
+		h[i] = bnau[j];
 		i++;
 	}
 	constraint4: for (int j=0; j<N_QP; j++){
-		h[i] = a_neg[j];
+		h[i] = anau_neg[j];
 		i++;
 	}
 	return;

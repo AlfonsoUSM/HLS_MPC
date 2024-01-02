@@ -14,9 +14,13 @@ function fx_cpp_print_matrix(txtfileID, A, def_string, n, m)
         fprintf(txtfileID, '%.15e, ', A(n,1:(m-1)));
         fprintf(txtfileID, '%.15e}};\n\n', A(n,m));
     else
-        fprintf(txtfileID, def_string +' =\t{');
-        fprintf(txtfileID, '%.15e, ', A(1:(n-1)));
-        fprintf(txtfileID, '%.15e};\n\n', A(n));
+        if (n == 1) 
+            fprintf(txtfileID, def_string +' =\t{%.15e};\n\n', A);
+        else
+            fprintf(txtfileID, def_string +' =\t{');
+            fprintf(txtfileID, '%.15e, ', A(1:(n-1)));
+            fprintf(txtfileID, '%.15e};\n\n', A(n));
+        end
     end
 end
 
