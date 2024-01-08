@@ -1,7 +1,7 @@
 %% CONTROL MPC DE FILTRO LC CON RESTRICCIONES EN LA ENTRADA Y EN LOS ESTADOS
 % ===============================================================================
 % Alfonso Cortes Neira - Universidad Técnica Federico Santa María
-% 04-01-2024
+% 07-01-2024
 % Based on the work by Juan David Escárate
 % ===============================================================================
 
@@ -12,7 +12,12 @@ clc; clear;
 format('longE')
 
 N_HOR = 2;      % tamaño del horizonte de predicción
-x0   = [2; 0; -20; 20]; % Estado inicial
+x0   = [0; 0; 0; 0]; % Estado inicial
+% rk: salida deseada del sistema
+rk = repelem([0 50; 0 0], [1,1], [1,2500]);
+% dk: perturbacion
+load('ADMM_model_10_iters.mat', 'io')
+dk = io';%*0.8;
 
 % Parámetros del sistema
 Rf  = 0.065;    % Resistencia Filtro 
@@ -24,7 +29,7 @@ fb  = 50;       % Frecuencia Hz
 Wb  = 2*pi*fb;   % Frecuencia rad/s   
 RL  = 23.6;     % Resistencia de carga
 Inom = 8;       % Corriente nominal, restricciones de corriente en dq
-tsimu = 0.06;       % tsimu: Tiempo de simulación en segundos
+tsimu = 0.5;       % tsimu: Tiempo de simulación en segundos
 k=0:Ts:tsimu-Ts;    % t: Arreglo de tiempo
 
 % Modelo espacio estado filtro LC (Continuo)
@@ -44,7 +49,7 @@ Bc   = [  1/Lf      0;
              0      0;
              0      0];
 
-Bpc  = [    0      0;      
+Bdc  = [    0      0;      
             0      0;
         -1/Cf      0;
             0  -1/Cf];
@@ -54,7 +59,7 @@ C   = [0 0 1 0; 0 0 0 1];%eye(4);
 % Modelo espacio estado filtro LC (Discreto)
 % x(k+1) = A*x(k) + B*u(k) + Bp*d(k) -> d = perturbacion (io, corriente de salida)
 % y(k)   = Cx(k)
-[~, Bp] = c2d(Ac,Bpc,Ts);
+[~, Bd] = c2d(Ac,Bdc,Ts);
 [A, B] = c2d(Ac,Bc,Ts);
 
 % Constraints
@@ -94,10 +99,6 @@ Omega(2,2) = 1e2;
 % Solución a LQR discreto
 [~,OmegaN,~] = dlqr(A,B,Omega,Gamma);
 
-% r: salida deseada del sistema
-rk = ones(2,size(k,2)).*[0;-5];
-rk(1,1:150) = 10*ones(1,150);
-
 IT_ADMM = 10;
 
 %% Dense Formulation
@@ -115,7 +116,7 @@ xk = zeros(N_SYS, length(k), 'single');
 uk = zeros(M_SYS, length(k), 'single');
 xk(:,1) = x0;
 
-theta = zeros(N_QP, length(k), 'single');
+%theta = zeros(N_QP, length(k), 'single');
 
 [D,E] = fx_dense_matrices(A,B,N_HOR);       % constantes del sistema
 K = blkdiag(kron(eye(N_HOR-1),Omega),OmegaN);
@@ -129,8 +130,7 @@ F = single(2*D'*K*E);                       % constante del sistema
 D = single(D);
 G = [V;-V;W*E;-W*E];                        % constante del sistema
 
-rho = single(fx_dhang_rho(Q,G));
-%rho = single(0.10070947);%single(62.963413);%
+rho = single(62.963413);%single(fx_dhang_rho(Q,G));%single(0.10070947);%
 
 Q = single(Q);
 G = single(G);
@@ -143,7 +143,7 @@ z_ADMM = zeros(M_QP, 1, 'single');
 u_ADMM = zeros(M_QP, 1, 'single');
 
 for i=1:length(k)
-    [xinf, uinf] = fx_stationary(A, B, C, rk(:,i));
+    [xinf, uinf] = fx_stationary(A, B, C, rk(:,i), Bd, dk(:,i));
     q = ((xk(:,i)-xinf)'*F)';
     Vu = single(V*kron(ones(N_HOR,1),uinf));
     WDx = single(W*(D*xk(:,i) + kron(ones(N_HOR,1),xinf)));
@@ -154,8 +154,8 @@ for i=1:length(k)
     g = [c-Vu; Vu-d; e-WDx; WDx-f];
     [t_ADMM, z_ADMM, u_ADMM] = fx_qp_admm(Q, q, G, g,t_ADMM, z_ADMM, u_ADMM, rho, IT_ADMM);
     uk(:,i) = t_ADMM(1:M_SYS)+uinf;
-    xk(:,i+1) = A*xk(:,i)+B*uk(:,i); % Cálculo del siguiente estado
-    theta(:,i) = t_ADMM(:,1);
+    xk(:,i+1) = A*xk(:,i)+B*uk(:,i)+Bd*dk(:,i); % Cálculo del siguiente estado
+    %theta(:,i) = t_ADMM(:,1);
 end
 
 R = Q + rho*(G'*G);
@@ -170,14 +170,13 @@ figure
 plot(rk(1,:))
 hold on
 plot(rk(2,:))
-plot(xk(1,:))
-plot(xk(2,:))
+plot(sqrt(xk(1,:).*xk(1,:)+xk(2,:).*xk(2,:)))
 plot(xk(3,:))
 plot(xk(4,:))
 plot(uk(1,:))
 plot(uk(2,:))
 grid on
-legend('Reference r2', 'Reference r3', 'State x0', 'State x1', 'State x2', 'State x3','Input u0','Input u1')
+legend('Vrefd', 'Vrefq', '|Ifdq| (x0 and x1)', 'Vcd (x2)', 'Vcq (x3)','Input u0','Input u1')
 
 
 %% Generate C++ file with Global Variables (constants)
