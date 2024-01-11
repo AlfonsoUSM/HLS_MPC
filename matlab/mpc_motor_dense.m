@@ -1,7 +1,7 @@
 %% MPC for DC-DC motor, dense formulation
 % ===============================================================================
 % Alfonso Cortes Neira - Universidad Técnica Federico Santa María
-% 20-12-2023
+% 04-01-2024
 % Based on the work by Andrew Morrison
 % https://github.com/morrisort/embeddedMPC/
 % ===============================================================================
@@ -121,15 +121,15 @@ txtfileID = fopen(txtfile,'w');
 fprintf(txtfileID, "\n#include "+char(34)+"system.hpp"+char(34)+"\n\n// HOR = 5\n#if defined DENSE\n\n");
 
 fx_cpp_print_matrix(txtfileID, G, "data_t G[M_QP][N_QP]", M_QP, N_QP)
-fx_cpp_print_matrix(txtfileID, c, "data_t c[N_QP]", N_QP)
-fx_cpp_print_matrix(txtfileID, -d, "data_t d_neg[N_QP]", N_QP)
-fx_cpp_print_matrix(txtfileID, e, "data_t e[N_SYS*N_HOR]", (N_SYS*N_HOR))
-fx_cpp_print_matrix(txtfileID, f, "data_t f[N_SYS*N_HOR]", (N_SYS*N_HOR))
+%fx_cpp_print_matrix(txtfileID, c, "data_t c[N_QP]", N_QP)
+%fx_cpp_print_matrix(txtfileID, -d, "data_t d_neg[N_QP]", N_QP)
+%fx_cpp_print_matrix(txtfileID, e, "data_t e[N_SYS*N_HOR]", (N_SYS*N_HOR))
+%fx_cpp_print_matrix(txtfileID, f, "data_t f[N_SYS*N_HOR]", (N_SYS*N_HOR))
 fx_cpp_print_matrix(txtfileID, D, "data_t D[N_SYS*N_HOR][N_SYS]", (N_SYS*N_HOR), N_SYS)
 fx_cpp_print_matrix(txtfileID, F, "data_t F[N_SYS][N_QP]", N_SYS, N_QP)
 
 fx_cpp_print_matrix(txtfileID, R_inv, "data_t R_inv[N_QP][N_QP]", N_QP, N_QP)
-fx_cpp_print_matrix(txtfileID, P, "data_t W[N_QP][M_QP]", N_QP, M_QP)
+fx_cpp_print_matrix(txtfileID, P, "data_t P[N_QP][M_QP]", N_QP, M_QP)
 
 fx_cpp_print_matrix(txtfileID, T_inv, "data_t T_inv[N_SYS+M_SYS][N_SYS+M_SYS]", N_SYS+M_SYS, N_SYS+M_SYS)
 fx_cpp_print_matrix(txtfileID, umin, "data_t umin[M_SYS]", M_SYS)
