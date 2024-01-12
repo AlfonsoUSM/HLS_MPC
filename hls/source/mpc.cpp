@@ -44,7 +44,7 @@ void mpc(data_t (&x0)[N_SYS], data_t (&r0)[P_SYS], data_t (&u0)[M_SYS], int IT){
 #if defined DENSE
 void mpc_dense_constraint(data_t (&x0)[N_SYS], data_t (&r0)[P_SYS], data_t (&inf)[N_SYS+M_SYS], data_t (&q)[N_QP], data_t (&g)[M_QP]){
 	// follow reference
-	data_t ref[N_SYS+P_SYS];
+	data_t ref[N_SYS+M_SYS];
 	ref1: for (int i=0; i<N_SYS; i++){
 		ref[i] = 0;
 	}
@@ -67,7 +67,7 @@ void mpc_dense_constraint(data_t (&x0)[N_SYS], data_t (&r0)[P_SYS], data_t (&inf
 		unau_min[i] = umin[i] - inf[N_SYS+i];
 	}
 	// build vectors q and g
-	vmmult<N_SYS,N_QP,data_t>(xnau, F, q);		// q = (x0'*F)';
+	vmmult<N_SYS,N_QP,data_t>(xnau, F, q);		// q = (xnau'*F)';
 	data_t dnau_neg[N_QP], cnau[N_QP];
 	ab1: for (int i=0; i<M_SYS; i++){
 		ab2: for (int j=0; j<N_HOR; j++){
@@ -127,26 +127,26 @@ void qp_admm(data_t (&q)[N_QP], data_t (&g)[M_QP], int IT){
 #pragma HLS LOOP_TRIPCOUNT max=10
 			data_t vx[M_QP];
 			data_t temp[M_QP];
-			admm_merge1:{	// vx = zk - h + uk;
+			admm_merge1:{	// vx = zk - g + uk;
 				vsub<M_QP,data_t>(zk_admm, g, temp);
 				vadd<M_QP,data_t>(temp, uk_admm, vx);
 			}
 			data_t temp1[N_QP], temp2[N_QP], temp3[N_QP];
-			admm_merge2:{	// tk = R_inv * (-rho * H^T * vx - q);
+			admm_merge2:{	// tk = R_inv * (-rho * G^T * vx - q);
 				mvmult<N_QP,M_QP,data_t>(P, vx, temp1);
 				vsub<N_QP,data_t>(temp1, q, temp2);
 			}
 			mvmult<N_QP,N_QP,data_t>(R_inv, temp2, tk_admm);
 			data_t Gtk[M_QP], temp4[M_QP], temp5[M_QP], temp6[M_QP], temp7[M_QP];
-			admm_merge:{	// zk = max{0, g - uk - G*tk};	uk = uk + (H*tk + zk - h);
-				mvmult<M_QP,N_QP,data_t>(G, tk_admm, Gtk);		// Htk = H*kt
-				vsub<M_QP,data_t>(g, uk_admm, temp4);			// temp4 = h - uk
-				vsub<M_QP,data_t>(temp4, Gtk, temp5);			// temp5 = (h - uk) - Htk
-				vadd<M_QP,data_t>(uk_admm, Gtk, temp6);			// temp6 = uk + Htk
-				max0<M_QP,data_t>(temp5, zk_admm);				// zk = max{0, h - uk - H*tk}
-				vsub<M_QP,data_t>(temp6, g, temp7);				// temp7 = (uk + Htk) - h
+			admm_merge:{	// zk = max{0, g - uk - G*tk};	uk = uk + (G*tk + zk - g);
+				mvmult<M_QP,N_QP,data_t>(G, tk_admm, Gtk);		// Gtk = G*kt
+				vsub<M_QP,data_t>(g, uk_admm, temp4);			// temp4 = g - uk
+				vsub<M_QP,data_t>(temp4, Gtk, temp5);			// temp5 = (g - uk) - Gtk
+				vadd<M_QP,data_t>(uk_admm, Gtk, temp6);			// temp6 = uk + Gtk
+				max0<M_QP,data_t>(temp5, zk_admm);				// zk = max{0, g - uk - G*tk}
+				vsub<M_QP,data_t>(temp6, g, temp7);				// temp7 = (uk + Gtk) - g
 			}
-				vadd<M_QP,data_t>(temp7, zk_admm, uk_admm);		// uk = ((uk + Htk) - h) + zk
+				vadd<M_QP,data_t>(temp7, zk_admm, uk_admm);		// uk = ((uk + gtk) - g) + zk
 			//}
 	}
 	return;

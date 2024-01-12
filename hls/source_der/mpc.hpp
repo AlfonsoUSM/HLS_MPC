@@ -9,12 +9,12 @@
 /*!
 @brief
 */
-void mpc(data_t (&x0)[N_SYS], data_t (&x0)[N_SYS], data_t (&u0)[M_SYS], int IT);
+void mpc(data_t (&x0)[N_SYS], data_t (&r0)[P_SYS], data_t (&d0)[D_SYS], data_t (&u0)[M_SYS], int IT);
 
 /*!
 @brief
 */
-void mpc_dense_constraint(data_t (&x0)[N_SYS], data_t (&x0)[N_SYS], data_t (&inf)[N_SYS+M_SYS], data_t (&q)[N_QP], data_t (&g)[M_QP]);
+void mpc_dense_constraint(data_t (&x0)[N_SYS], data_t (&r0)[P_SYS], data_t (&d0)[D_SYS], data_t (&inf)[N_SYS+M_SYS], data_t (&q)[N_QP], data_t (&g)[M_QP]);
 
 /*!
 @brief

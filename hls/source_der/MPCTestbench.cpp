@@ -24,7 +24,7 @@ int main(int argc, char *argv[]){
     cout << "Horizon : " << N_HOR << endl;
     // number of samples to read from samples file
     // large numbers can make the test bench really slow
-    int nSamplestb = 10;//10000;
+    int nSamplestb = 2500;//2501;
 
 //	if (argc!=2){
 //	        cerr << "Must specify .bin\n";
@@ -110,7 +110,8 @@ int main(int argc, char *argv[]){
     }
 
     data_t x[nSamplestb][N_SYS];
-//    data_t r[nSamplestb][P_SYS];
+    data_t r[nSamplestb][P_SYS];
+    data_t d[nSamplestb][D_SYS];
     data_t ref_u[nSamplestb][M_SYS];
 
     for (int sample=0; sample<nSamplestb; sample++){	// for each sample
@@ -119,10 +120,14 @@ int main(int argc, char *argv[]){
         	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
             x[sample][i] = (data_t)aux2;
         }
-//        for (int i=0; i<P_SYS; i++){		// load r
-//        	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-//            r[sample][i] = (data_t)aux2;
-//        }
+        for (int i=0; i<P_SYS; i++){		// load r
+        	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
+            r[sample][i] = (data_t)aux2;
+        }
+        for (int i=0; i<D_SYS; i++){		// load r
+        	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
+            d[sample][i] = (data_t)aux2;
+        }
         for (int i=0; i<M_SYS; i++){		// load expected u
         	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
             ref_u[sample][i] = aux2;
@@ -134,7 +139,8 @@ int main(int argc, char *argv[]){
     cout << "Reference ready" << endl;
 
     data_t x0[N_SYS];
-//    data_t r0[P_SYS] = {0};
+    data_t r0[P_SYS];
+    data_t d0[D_SYS];
     data_t ref_u0[M_SYS];
     data_t u0[M_SYS] = {0};
 //    data_t x1[N_SYS] = {0};
@@ -143,17 +149,25 @@ int main(int argc, char *argv[]){
 	data_t per_error;
 	fstream fout;
 	fout.open(output_file_name, ios::out);
-	fout << "x0_1, x0_2, u0_ref, u0\n";
+	fout << "x0_1, x0_2, r0_1 r0_2 d0_1 d0_2 u0ref_1 u0ref_2, u0\n";
 
     for (int sample=0; sample<nSamplestb; sample++){	// for each sample
     	for (int i=0; i<N_SYS; i++){		// load x0
     	    x0[i] = x[sample][i];
     	    fout << x0[i] << ",";
     	}
+    	for (int i=0; i<P_SYS; i++){		// load r0
+    	    r0[i] = r[sample][i];
+    	    fout << r0[i] << ",";
+    	}
+    	for (int i=0; i<D_SYS; i++){		// load d0
+    	    d0[i] = d[sample][i];
+    	    fout << d0[i] << ",";
+    	}
         for (int i=0; i<M_SYS; i++){		// load ref u0
             ref_u0[i] = ref_u[sample][i];
         }
-        mpc(x0, u0, 10);
+        mpc(x0, r0, d0, u0, 10);
 
 #ifdef DISPLAY
     	cout << "sample number : " << sample << endl;

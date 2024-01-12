@@ -104,12 +104,13 @@ Omega(2,2) = 1e2;
 
 %% Dense Formulation
 
-N_SYS = size(Ad,1);      % numero de estados
-M_SYS = size(Bd,2);      % numero de actuaciones
-P_SYS = size(C,1);      % numero de salidas con referencia
-A_SYS = size(umax,1);   % numero de pares de restricciones de la entrada
-B_SYS = size(xmax,1);   % numero de pares de restricciones del estado
-C_SYS = 2*(A_SYS+B_SYS);% numero total de restricciones 
+N_SYS = size(Ad,1);         % numero de estados
+M_SYS = size(Bd,2);         % numero de actuaciones
+P_SYS = size(Cu,1);         % numero de referencias (salidas)
+A_SYS = size(umax,1);       % numero de pares de restricciones de la entrada
+B_SYS = size(xmax,1);       % numero de pares de restricciones del estado
+C_SYS = 2*(A_SYS+B_SYS);    % numero total de restricciones 
+D_SYS = size(Bpd,2);        % numero de perturbaciones
 
 N_QP = N_HOR * M_SYS;
 M_QP = N_HOR * C_SYS;
@@ -167,7 +168,7 @@ end
 R = Q + rho*(G'*G);
 R_inv = R \ eye(size(R,1));
 P = -rho*G';            % RhoGt_neg
-T = [Ad-eye(N_SYS),Bd;Cu,zeros(M_SYS,M_SYS)];
+T = [eye(N_SYS)-Ad,-Bd;Cu,zeros(M_SYS,M_SYS)];
 T_inv = T \ eye(N_SYS+M_SYS);
 
 %% Plot
@@ -209,6 +210,7 @@ txtfileID = fopen(txtfile,'w');
 
 fprintf(txtfileID, "\n#include "+char(34)+"system.hpp"+char(34)+"\n\n// HOR = "+N_HOR+"\n#if defined DENSE\n\n");
 
+fx_cpp_print_matrix(txtfileID, Bpd, "data_t Bpd[N_SYS][D_SYS]", N_SYS, D_SYS)
 fx_cpp_print_matrix(txtfileID, G, "data_t G[M_QP][N_QP]", M_QP, N_QP)
 %fx_cpp_print_matrix(txtfileID, c, "data_t c[A_SYS*N_HOR]", A_SYS*N_HOR)
 %fx_cpp_print_matrix(txtfileID, d, "data_t d[A_SYS*N_HOR]", A_SYS*N_HOR)
@@ -271,6 +273,7 @@ for sample = 1:nSamples
 %         fwrite(fileID,reshape(c_hat(:,sample)',1,[]),'double');
     fwrite(binfileID,reshape(xk(:,sample)',1,[]),data_t);
     fwrite(binfileID,reshape(rk(:,sample)',1,[]),data_t);
+    fwrite(binfileID,reshape(dk(:,sample)',1,[]),data_t);
     fwrite(binfileID,reshape(uk(:,sample)',1,[]),data_t);
 %         fwrite(fileID,reshape(theta(:,sample),1,[]),'double');
 end
