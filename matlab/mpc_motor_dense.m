@@ -1,7 +1,7 @@
 %% MPC for DC-DC motor, dense formulation
 % ===============================================================================
 % Alfonso Cortes Neira - Universidad Técnica Federico Santa María
-% 15-09-2023
+% 04-01-2024
 % Based on the work by Andrew Morrison
 % https://github.com/morrisort/embeddedMPC/
 % ===============================================================================
@@ -41,8 +41,10 @@ Omega=C'*C;
 % r: salida deseada del sistema
 %f = 0.2; %hz
 %r = square(2*pi*f*t);
+rk = zeros(1,size(k,2));
+rk(1,1:1500) = rk(1,1:1500)+1;
 
-ADMM_iters = 10;
+IT_ADMM = 10;
 
 %% Dense Formulation
 
@@ -64,19 +66,14 @@ L = kron(eye(N_HOR),Gamma);
 Q = 2*(L+E'*K*E);                           % constante del sistema
 Q = (Q+Q')/2;
 D = single(D);
-F = [E;-E];
-G = single(2*D'*K*E);                       % constante del sistema
-a = single(kron(ones(N_HOR,1),umin));       % constante del sistema
-b = single(kron(ones(N_HOR,1),umax));       % constante del sistema
-d = single(kron(ones(N_HOR,1),xmin));       % constante del sistema
-e = single(kron(ones(N_HOR,1),xmax));       % constante del sistema
-H = [F;eye(N_QP);-eye(N_QP)];               % constante del sistema
+F = single(2*D'*K*E);                       % constante del sistema
+G = [eye(N_QP);-eye(N_QP);E;-E];               % constante del sistema
 
-rho = single(fx_dhang_rho(Q,H));
+rho = single(fx_dhang_rho(Q,G));
 %rho = single(0.10070947);%single(62.963413);%
 
 Q = single(Q);
-H = single(H);
+G = single(G);
 
 %% MPC Iteration
 
@@ -85,46 +82,60 @@ z_ADMM = zeros(M_QP, 1, 'single');
 u_ADMM = zeros(M_QP, 1, 'single');
 
 for i=1:length(k)
-    q = (xk(:,i)'*G)';
-    f = [e-D*xk(:,i); D*xk(:,i)-d];
-    h = [f; b; -a];
-    [t_ADMM, z_ADMM, u_ADMM] = fx_qp_admm(Q, q, H, h,t_ADMM, z_ADMM, u_ADMM, rho, ADMM_iters);
-    uk(:,i) = t_ADMM(1:M_SYS);
+    [xinf, uinf] = fx_stationary(A, B, C, rk(:,i));
+    q = ((xk(:,i)-xinf)'*F)';      
+    c = single(kron(ones(N_HOR,1),(umax-uinf)));
+    d = single(kron(ones(N_HOR,1),(umin-uinf)));       
+    e = single(kron(ones(N_HOR,1),(xmax-xinf)));   
+    f = single(kron(ones(N_HOR,1),(xmin-xinf))); 
+    g = [c; -d; e-D*xk(:,i); D*xk(:,i)-f];
+    [t_ADMM, z_ADMM, u_ADMM] = fx_qp_admm(Q, q, G, g,t_ADMM, z_ADMM, u_ADMM, rho, IT_ADMM);
+    uk(:,i) = t_ADMM(1:M_SYS) + uinf;
     xk(:,i+1) = A*xk(:,i)+B*uk(:,i); % Cálculo del siguiente estado
     theta(:,i) = t_ADMM(:,1);
 end
 
-R = Q + rho*(H'*H);
+R = Q + rho*(G'*G);
 R_inv = R \ eye(size(R,1));
-W = -rho*H';            % RhoHt_neg
+P = -rho*G';            % RhoHt_neg
+T = [A-eye(N_SYS),B;C,zeros(M_SYS,M_SYS)];
+T_inv = T \ eye(N_SYS+M_SYS);
 
 %% Plot
 
 figure
-plot(xk(1,:))
+plot(rk(1,:))
 hold on
+plot(xk(1,:))
 plot(xk(2,:))
 plot(uk(1,:))
 grid on
+legend('Reference r', 'State x0', 'State x1', 'Input u')
 
 
 %% Generate C++ file with Global Variables (constants)
 
-txtfile = "samples/MPC_motor_dense_N"+N_HOR+".cpp";
+txtfile = "samples2/MPC_motor_dense_N"+N_HOR+".cpp";
 txtfileID = fopen(txtfile,'w');
 
 fprintf(txtfileID, "\n#include "+char(34)+"system.hpp"+char(34)+"\n\n// HOR = 5\n#if defined DENSE\n\n");
 
-fx_cpp_print_matrix(txtfileID, H, "data_t H[M_QP][N_QP]", M_QP, N_QP)
-fx_cpp_print_matrix(txtfileID, -a, "data_t a_neg[N_QP]", N_QP)
-fx_cpp_print_matrix(txtfileID, b, "data_t b[N_QP]", N_QP)
-fx_cpp_print_matrix(txtfileID, d, "data_t d[N_SYS*N_HOR]", (N_SYS*N_HOR))
-fx_cpp_print_matrix(txtfileID, e, "data_t e[N_SYS*N_HOR]", (N_SYS*N_HOR))
+fx_cpp_print_matrix(txtfileID, G, "data_t G[M_QP][N_QP]", M_QP, N_QP)
+%fx_cpp_print_matrix(txtfileID, c, "data_t c[N_QP]", N_QP)
+%fx_cpp_print_matrix(txtfileID, -d, "data_t d_neg[N_QP]", N_QP)
+%fx_cpp_print_matrix(txtfileID, e, "data_t e[N_SYS*N_HOR]", (N_SYS*N_HOR))
+%fx_cpp_print_matrix(txtfileID, f, "data_t f[N_SYS*N_HOR]", (N_SYS*N_HOR))
 fx_cpp_print_matrix(txtfileID, D, "data_t D[N_SYS*N_HOR][N_SYS]", (N_SYS*N_HOR), N_SYS)
-fx_cpp_print_matrix(txtfileID, G, "data_t G[N_SYS][N_QP]", N_SYS, N_QP)
+fx_cpp_print_matrix(txtfileID, F, "data_t F[N_SYS][N_QP]", N_SYS, N_QP)
 
 fx_cpp_print_matrix(txtfileID, R_inv, "data_t R_inv[N_QP][N_QP]", N_QP, N_QP)
-fx_cpp_print_matrix(txtfileID, W, "data_t W[N_QP][M_QP]", N_QP, M_QP)
+fx_cpp_print_matrix(txtfileID, P, "data_t P[N_QP][M_QP]", N_QP, M_QP)
+
+fx_cpp_print_matrix(txtfileID, T_inv, "data_t T_inv[N_SYS+M_SYS][N_SYS+M_SYS]", N_SYS+M_SYS, N_SYS+M_SYS)
+fx_cpp_print_matrix(txtfileID, umin, "data_t umin[M_SYS]", M_SYS)
+fx_cpp_print_matrix(txtfileID, umax, "data_t umax[M_SYS]", M_SYS)
+fx_cpp_print_matrix(txtfileID, xmin, "data_t xmin[N_SYS]", N_SYS)
+fx_cpp_print_matrix(txtfileID, xmax, "data_t xmax[N_SYS]", N_SYS)
 
 fprintf(txtfileID, "\n#else\n\n// SPARSE\n\n#endif");
 
@@ -133,7 +144,7 @@ fclose(txtfileID);
 
 %% Generate .bin file with samples
 
-binfile = "samples/MPC_motor_dense_N"+N_HOR+".bin";
+binfile = "samples2/MPC_motor_dense_N"+N_HOR+".bin";
 binfileID = fopen(binfile,'w');
 
 nSamples = length(k);
@@ -147,7 +158,7 @@ fwrite(binfileID, P_SYS,'uint8');
 fwrite(binfileID, N_HOR,'uint8');
 fwrite(binfileID, N_QP,'uint16');
 fwrite(binfileID, M_QP,'uint16');
-fwrite(binfileID, ADMM_iters,'uint16');
+fwrite(binfileID, IT_ADMM,'uint16');
 fwrite(binfileID, nSamples,'uint16'); 
 
 % fwrite(binfileID,reshape(xmin',1,[]),data_t);
@@ -165,6 +176,7 @@ fwrite(binfileID,reshape(B',1,[]),data_t);
 for sample = 1:nSamples
 %         fwrite(fileID,reshape(c_hat(:,sample)',1,[]),'double');
     fwrite(binfileID,reshape(xk(:,sample)',1,[]),data_t);
+    fwrite(binfileID,reshape(rk(:,sample)',1,[]),data_t);
     fwrite(binfileID,reshape(uk(:,sample)',1,[]),data_t);
 %         fwrite(fileID,reshape(theta(:,sample),1,[]),'double');
 end

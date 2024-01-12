@@ -8,7 +8,7 @@
 using namespace std;
 #define DISPLAY
 #ifdef DENSE
-char input_file_name[] = "samples.bin";//"MPC_motor_dense_N4.bin";//
+char input_file_name[] = "MPC_motor_dense_N4.bin";//"samples.bin";//
 #else
 char input_file_name[] = "MPC_motor_sparse_N4.bin";
 #endif
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]){
     }
 
     data_t x[nSamplestb][N_SYS];
-//    data_t r[nSamplestb][P_SYS];
+    data_t r[nSamplestb][P_SYS];
     data_t ref_u[nSamplestb][M_SYS];
 
     for (int sample=0; sample<nSamplestb; sample++){	// for each sample
@@ -119,10 +119,10 @@ int main(int argc, char *argv[]){
         	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
             x[sample][i] = (data_t)aux2;
         }
-//        for (int i=0; i<P_SYS; i++){		// load r
-//        	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
-//            r[sample][i] = (data_t)aux2;
-//        }
+        for (int i=0; i<P_SYS; i++){		// load r
+        	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
+            r[sample][i] = (data_t)aux2;
+        }
         for (int i=0; i<M_SYS; i++){		// load expected u
         	samples.read(reinterpret_cast<char*>(&aux2), sizeof(sample_data_t));
             ref_u[sample][i] = aux2;
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]){
     cout << "Reference ready" << endl;
 
     data_t x0[N_SYS];
-//    data_t r0[P_SYS] = {0};
+    data_t r0[P_SYS];
     data_t ref_u0[M_SYS];
     data_t u0[M_SYS] = {0};
 //    data_t x1[N_SYS] = {0};
@@ -150,13 +150,17 @@ int main(int argc, char *argv[]){
     	    x0[i] = x[sample][i];
     	    fout << x0[i] << ",";
     	}
+    	for (int i=0; i<P_SYS; i++){		// load r0
+    	    r0[i] = r[sample][i];
+    	    fout << r0[i] << ",";
+    	}
         for (int i=0; i<M_SYS; i++){		// load ref u0
             ref_u0[i] = ref_u[sample][i];
         }
-        mpc(x0, u0, 10);
+        mpc(x0, r0, u0, 10);
 
 #ifdef DISPLAY
-    	cout << "sample number : " << sample << endl;
+    	cout << "sample number : " << sample << "\t\treference: " << r0[0] << endl;
 #endif
         for (int i=0; i<M_SYS; i++){		// error
         	double error = fabs((double)ref_u0[i] -(double)u0[i]);
