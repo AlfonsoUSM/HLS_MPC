@@ -83,8 +83,8 @@ void mpc_dense_constraint(data_t (&x0)[N_SYS], data_t (&r0)[P_SYS], data_t (&d0)
 		for (int j=0; j<N_HOR; j++){
 			g_nau[A_SYS*j+i] = unau_max[i];
 		}
-		for (int j=N_HOR; j<(2*N_HOR); j++){
-			g_nau[A_SYS*j+i] = unau_min[i];
+		for (int j=0; j<N_HOR; j++){
+			g_nau[A_SYS*(j+N_HOR)+i] = unau_min[i];
 		}
 	}
 	int k = 2*N_HOR*A_SYS;
