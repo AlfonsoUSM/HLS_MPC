@@ -14,6 +14,8 @@ data_t uk_admm[M_QP] = {0};
 void mpc(data_t (&x0)[N_SYS], data_t (&r0)[P_SYS], data_t (&d0)[D_SYS], data_t (&u0)[M_SYS], int IT){
 #pragma HLS INTERFACE mode=s_axilite port=return
 #pragma HLS INTERFACE mode=s_axilite port=x0
+#pragma HLS INTERFACE mode=s_axilite port=r0
+#pragma HLS INTERFACE mode=s_axilite port=d0
 #pragma HLS INTERFACE mode=s_axilite port=u0
 #pragma HLS INTERFACE mode=s_axilite port=IT
 	// constraint g_nau, q_nau = constraint(x0, r0, d0)
@@ -83,8 +85,8 @@ void mpc_dense_constraint(data_t (&x0)[N_SYS], data_t (&r0)[P_SYS], data_t (&d0)
 		for (int j=0; j<N_HOR; j++){
 			g_nau[A_SYS*j+i] = unau_max[i];
 		}
-		for (int j=N_HOR; j<(2*N_HOR); j++){
-			g_nau[A_SYS*j+i] = unau_min[i];
+		for (int j=0; j<N_HOR; j++){
+			g_nau[A_SYS*(j+N_HOR)+i] = unau_min[i];
 		}
 	}
 	int k = 2*N_HOR*A_SYS;

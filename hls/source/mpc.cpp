@@ -15,6 +15,7 @@ void mpc(data_t (&x0)[N_SYS], data_t (&r0)[P_SYS], data_t (&u0)[M_SYS], int IT){
 //#pragma HLS INTERFACE mode=ap_ctrl_none port=return
 #pragma HLS INTERFACE mode=s_axilite port=return
 #pragma HLS INTERFACE mode=s_axilite port=x0
+#pragma HLS INTERFACE mode=s_axilite port=r0
 #pragma HLS INTERFACE mode=s_axilite port=u0
 #pragma HLS INTERFACE mode=s_axilite port=IT
 	// constraint c_hat = constraint(x0, r0)
