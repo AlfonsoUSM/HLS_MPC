@@ -192,7 +192,13 @@ plot(uk(2,:), uk(1,:))
 hold on
 plot(Vdc/(sqrt(3))*sin(0:pi/100:2*pi),Vdc/(sqrt(3))*cos(0:pi/100:2*pi))
 grid on
+temp = -150:50:150;
+for i = 1:A_SYS
+    y = (-H(i,1)*temp + umax(i))/H(i,2);
+    plot(y,temp)
+end
 hold off
+axis([-150 150 -150 150])
 %legend('|Vdq|', 'Inom')
 
 figure
