@@ -8,7 +8,7 @@
 using namespace std;
 #define DISPLAY
 #ifdef DENSE
-char input_file_name[] = "MPC_der_dense_N2_C40.bin";//"samples.bin";//
+char input_file_name[] = "samples.bin";//"MPC_der_dense_N2_C40.bin";//
 #else
 char input_file_name[] = "MPC_der_sparse_N4.bin";
 #endif

@@ -1,7 +1,7 @@
 %% CONTROL MPC DE FILTRO LC CON RESTRICCIONES EN LA ENTRADA Y EN LOS ESTADOS
 % ===============================================================================
 % Alfonso Cortes Neira - Universidad Técnica Federico Santa María
-% 21-01-2024
+% 07-02-2024
 % Based on the work by Juan David Escárate
 % ===============================================================================
 
@@ -66,13 +66,13 @@ Bp  = [    0      0;
 [Ad, Bd] = c2d(A,B,Ts);
 
 % Constraints
-Npoly = 20;
-% Restricciones de las entradas, voltajes [Vmd; Vmq] (politopo de 10 lados)
+Npoly = 10;
+% Restricciones de las entradas, voltajes [Vmd; Vmq] (politopo de Npoly lados)
 [H, max] = fx_poliedro(Vdc/sqrt(3), Npoly);
 umax = Vdc/sqrt(3)*max;
 umin = -umax;
 
-% Restricciones de estados, sólo corriente [Ifd; Ifq] (politopo de 10 lados)
+% Restricciones de estados, sólo corriente [Ifd; Ifq] (politopo de Npoly lados)
 [I, max] = fx_poliedro(Inom, Npoly);
 I = [I, zeros(Npoly/2,2)];
 xmax = Inom*max;
