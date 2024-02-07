@@ -1,7 +1,7 @@
 %% CONTROL MPC DE FILTRO LC CON RESTRICCIONES EN LA ENTRADA Y EN LOS ESTADOS
 % ===============================================================================
 % Alfonso Cortes Neira - Universidad Técnica Federico Santa María
-% 11-01-2024
+% 21-01-2024
 % Based on the work by Juan David Escárate
 % ===============================================================================
 
@@ -66,31 +66,16 @@ Bp  = [    0      0;
 [Ad, Bd] = c2d(A,B,Ts);
 
 % Constraints
+Npoly = 20;
 % Restricciones de las entradas, voltajes [Vmd; Vmq] (politopo de 10 lados)
-H = [ 3.078 1; % Matriz de restrcciones que define el politopo
-            -3.078 1; % Se puede restringir con 5 rectas
-             0.726 1; 
-            -0.726 1; 
-             0 1];
-ang  = 36*pi/180; % pi/5
-umax = Vdc/sqrt(3)*[3.078;
-                        3.078;
-                        (sin(ang) + 0.726*cos(ang)); 
-                        (sin(ang) + 0.726*cos(ang));
-                        sin(2*ang)];
+[H, max] = fx_poliedro(Vdc/sqrt(3), Npoly);
+umax = Vdc/sqrt(3)*max;
 umin = -umax;
 
 % Restricciones de estados, sólo corriente [Ifd; Ifq] (politopo de 10 lados)
-I = [ 3.078 1 0 0; % Matriz de restrcciones que define el politopo
-            -3.078 1 0 0; % Se puede restringir con 5 rectas
-             0.726 1 0 0; % Matriz para selecionar id e iq
-            -0.726 1 0 0; 
-             0 1 0 0];
-xmax = Inom*[   3.078;
-                3.078;
-                (sin(ang) + 0.726*cos(ang)); 
-                (sin(ang) + 0.726*cos(ang));
-                sin(2*ang)];
+[I, max] = fx_poliedro(Inom, Npoly);
+I = [I, zeros(Npoly/2,2)];
+xmax = Inom*max;
 xmin = -xmax;
 
 % Matrices de Peso 
@@ -211,7 +196,7 @@ legend('I', 'Inom')
 
 %% Generate C++ file with Global Variables (constants)
 
-txtfile = "samples2/MPC_der_dense_N"+N_HOR+".cpp";
+txtfile = "samples2/MPC_der_dense_N"+N_HOR+"_C"+C_SYS+".cpp";
 txtfileID = fopen(txtfile,'w');
 
 fprintf(txtfileID, "\n#include "+char(34)+"system.hpp"+char(34)+"\n\n// HOR = "+N_HOR+"\n#if defined DENSE\n\n");
@@ -246,7 +231,7 @@ fclose(txtfileID);
 
 %% Generate .bin file with samples
 
-binfile = "samples2/MPC_der_dense_N"+N_HOR+".bin";
+binfile = "samples2/MPC_der_dense_N"+N_HOR+"_C"+C_SYS+".bin";
 binfileID = fopen(binfile,'w');
 
 nSamples = length(k);

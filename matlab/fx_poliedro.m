@@ -45,7 +45,7 @@ function [H, max] = fx_poliedro(R, N)
         max_aux(i) = -n/R;          % Asignar el vector max
     end
 
-    max = zeros(N/2);
+    max = zeros(N/2,1);
     H = zeros(N/2,2);
     j = 1;
     for i = 1:N

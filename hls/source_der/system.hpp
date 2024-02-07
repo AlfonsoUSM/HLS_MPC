@@ -6,8 +6,8 @@
 #define M_SYS 2		// control inputs
 #define N_SYS 4		// system states
 #define P_SYS 2		// system references
-#define A_SYS 5		// input constraints pairs
-#define B_SYS 5		// state constraints pairs
+#define A_SYS 10	// input constraints pairs
+#define B_SYS 10	// state constraints pairs
 #define C_SYS 2*(A_SYS+B_SYS)
 #define D_SYS 2		// disturbances
 
