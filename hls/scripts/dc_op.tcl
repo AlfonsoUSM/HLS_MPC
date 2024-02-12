@@ -6,7 +6,7 @@
 # Based on the work by Juan José Vásquez
 # ===============================================================================
 
-# Run Vitis HLS script with C:\Xilinx\Vitis_HLS\2022.2\bin\vitis_hls run_hls.tcl
+# Run Vitis HLS script with C:\Xilinx\Vitis_HLS\2022.2\bin\vitis_hls dc_op.tcl
 # Execute Vitis HLS in shell mode with C:\Xilinx\Vitis_HLS\2022.2\bin\vitis_hls -i
 
 set FORM "dense"
