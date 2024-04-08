@@ -43,7 +43,6 @@ void mpc(data_t (&x0)[N_SYS], data_t (&r0)[P_SYS], data_t (&d0)[D_SYS], data_t (
 
 #if defined DENSE
 void mpc_dense_constraint(data_t (&x0)[N_SYS], data_t (&r0)[P_SYS], data_t (&d0)[D_SYS], data_t (&inf)[N_SYS+M_SYS], data_t (&q_nau)[N_QP], data_t (&g_nau)[M_QP]){
-	// follow reference currently not implemented
 	data_t Bpdd0[N_SYS];
 	mvmult<N_SYS,D_SYS,data_t>(Bpd, d0, Bpdd0);
 	data_t ref[N_SYS+M_SYS];
